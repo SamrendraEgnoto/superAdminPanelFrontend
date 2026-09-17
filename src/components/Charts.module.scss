@@ -1,0 +1,241 @@
+// @use '../styles/variables' as *;
+
+// // .chartCard {
+// //   @include glassmorphism;
+// //   padding: var(--spacing-xl);
+// //   border-radius: var(--radius-2xl);
+// //   height: 100%;
+// //   display: flex;
+// //   flex-direction: column;
+// //   position: relative;
+// //   overflow: hidden;
+
+// //   /* Subtle futuristic glow in the corner */
+// //   &::before {
+// //     content: '';
+// //     position: absolute;
+// //     top: -20%;
+// //     left: -10%;
+// //     width: 250px;
+// //     height: 250px;
+// //     background: radial-gradient(circle, var(--primary-transparent) 0%, transparent 70%);
+// //     border-radius: 50%;
+// //     filter: blur(40px);
+// //     z-index: 0;
+// //     pointer-events: none;
+// //   }
+// // }
+// .chartCard {
+//   @include glassmorphism;
+//   padding: var(--spacing-xl);
+//   border-radius: var(--radius-2xl);
+//   flex: 1;
+//   display: flex;
+//   flex-direction: column;
+//   min-height: 100%;
+//   position: relative;
+//   overflow: hidden;
+//   &::before {
+//     content: '';
+//     position: absolute;
+//     top: -20%;
+//     left: -10%;
+//     width: 250px;
+//     height: 250px;
+//     background: radial-gradient(circle, var(--primary-transparent) 0%, transparent 70%);
+//     border-radius: 50%;
+//     filter: blur(40px);
+//     z-index: 0;
+//     pointer-events: none;
+//   }
+// }
+
+// .title {
+//   font-size: 1.15rem;
+//   font-weight: 800;
+//   text-align: center;
+//   text-transform: uppercase;
+//   letter-spacing: 2px;
+//   background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+//   -webkit-background-clip: text;
+//   background-clip: text;
+//   -webkit-text-fill-color: transparent;
+//   margin-bottom: var(--spacing-xl);
+//   position: relative;
+//   z-index: 1;
+// }
+
+// // .chartWrapper {
+// //   position: relative;
+// //   width: 100%;
+// //   height: 350px;
+// //   margin: 0 auto;
+// //   flex: 1;
+// //   z-index: 1;
+// //   /* Neon glow effect on the Doughnut canvas */
+// //   filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.25));
+// //   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+// //   &:hover {
+// //     transform: scale(1.02);
+// //   }
+// // }
+// .chartWrapper {
+//   position: relative;
+//   width: 100%;
+//   flex: 1;
+//   min-height: 300px;
+//   margin: 0 auto;
+//   z-index: 1;
+//   filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.25));
+//   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+//   &:hover {
+//     transform: scale(1.02);
+//   }
+//   canvas {
+//     width: 100% !important;
+//     height: 100% !important;
+//   }
+// }
+
+// .emptyChart {
+//   position: absolute;
+//   inset: 0;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   color: var(--text-muted);
+//   font-weight: 500;
+//   font-size: 1.1rem;
+// }
+
+@use '../styles/variables' as *;
+
+/* ── Card shell ─────────────────────────────────────────────────────────── */
+.chartCard {
+  @include glassmorphism;
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-2xl);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, var(--primary-transparent) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(40px);
+    z-index: 0;
+    pointer-events: none;
+  }
+}
+
+/* ── Header row ─────────────────────────────────────────────────────────── */
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  position: relative;
+  z-index: 1;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* ── Toggle pill group ──────────────────────────────────────────────────── */
+.chartToggle {
+  display: flex;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.toggleBtn {
+  padding: 5px 13px;
+  border: none;
+  border-radius: calc(var(--radius-lg) - 3px);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+  white-space: nowrap;
+
+  &:hover:not(.active) {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &.active {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(37, 99, 235, 0.45);
+  }
+}
+
+/* ── Chart canvas wrapper ───────────────────────────────────────────────── */
+.chartWrapper {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 300px;
+  z-index: 1;
+  filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.2));
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover {
+    transform: scale(1.015);
+  }
+
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.emptyChart {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-muted);
+
+  span { font-size: 2.5rem; }
+
+  p {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+}

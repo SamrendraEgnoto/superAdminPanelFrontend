@@ -1,0 +1,129 @@
+/* Global Styles — loaded as a true global, NOT a CSS Module */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Theme token blocks live here so they are NEVER processed
+   by CSS Modules (which disallow non-class/id root selectors).
+   ───────────────────────────────────────────────────────────── */
+
+[data-theme="dark"] {
+  --bg-primary: #0a0f1e;
+  --bg-desktop: #0a0f1e;
+  --bg-surface: #111827;
+  --bg-surface-hover: #1a2236;
+  --bg-tertiary: #1e293b;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --text-disabled: #475569;
+
+  --border: #1e293b;
+  --border-light: #162032;
+  --border-focus: #2563eb;
+
+  --glass-bg: rgba(17, 24, 39, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+
+  --card-bg: #111827;
+  --input-bg: #1a2236;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #60a5fa;
+  --primary-transparent: rgba(37, 99, 235, 0.1);
+  --primary-transparent-hover: rgba(37, 99, 235, 0.18);
+
+  --secondary: #0d9488;
+  --secondary-light: #2dd4bf;
+
+  --danger: #dc2626;
+  --danger-dark: #b91c1c;
+  --danger-light: #fee2e2;
+
+  --success: #059669;
+  --success-light: #d1fae5;
+  --success-dark: #047857;
+
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --warning-dark: #b45309;
+
+  --info: #2563eb;
+  --info-light: #dbeafe;
+  --info-dark: #1e40af;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px -4px rgba(37, 99, 235, 0.25);
+
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-desktop: #eef2f7;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --bg-tertiary: #e2e8f0;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-disabled: #cbd5e1;
+
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-focus: #cbd5e1;
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  --card-bg: #ffffff;
+  --input-bg: #f1f5f9;
+
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #818cf8;
+  --primary-transparent: rgba(79, 70, 229, 0.1);
+  --primary-transparent-hover: rgba(79, 70, 229, 0.18);
+
+  --secondary: #0d9488;
+  --secondary-light: #2dd4bf;
+
+  --danger: #ef4444;
+  --danger-dark: #dc2626;
+  --danger-light: rgba(239, 68, 68, 0.08);
+
+  --success: #10b981;
+  --success-light: rgba(16, 185, 129, 0.08);
+  --success-dark: #047857;
+
+  --warning: #f59e0b;
+  --warning-light: rgba(245, 158, 11, 0.08);
+  --warning-dark: #b45309;
+
+  --info: #3b82f6;
+  --info-light: rgba(59, 130, 246, 0.08);
+  --info-dark: #1e40af;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  --shadow-glow: 0 0 15px rgba(79, 70, 229, 0.15);
+
+  color-scheme: light;
+}

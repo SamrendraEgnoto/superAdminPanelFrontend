@@ -1,0 +1,619 @@
+// @use '../../styles/variables' as *;
+
+// .page {
+//   animation: fadeIn var(--transition-slow);
+// }
+
+// .header {
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   margin-bottom: var(--spacing-2xl);
+
+//   @media (max-width: 768px) {
+//     flex-direction: column;
+//     align-items: flex-start;
+//     gap: var(--spacing-lg);
+//   }
+// }
+
+// .headerContent {
+//   h1 {
+//     font-size: 2rem;
+//     font-weight: 800;
+//     color: var(--text-primary);
+//     margin: 0 0 4px 0;
+//     letter-spacing: -0.02em;
+//   }
+
+//   p {
+//     color: var(--text-muted);
+//     font-size: 1.1rem;
+//     margin: 0;
+//   }
+// }
+
+// .actions {
+//   display: flex;
+//   gap: var(--spacing-md);
+//   align-items: center;
+// }
+
+// .select {
+//   padding: 8px 16px;
+//   background: var(--bg-surface);
+//   border: 1px solid var(--border);
+//   border-radius: var(--radius-md);
+//   color: var(--text-primary);
+//   font-size: 0.875rem;
+//   font-weight: 600;
+//   cursor: pointer;
+//   transition: all var(--transition-fast);
+
+//   &:hover {
+//     border-color: var(--primary);
+//   }
+
+//   &:focus {
+//     outline: none;
+//     border-color: var(--primary);
+//     box-shadow: 0 0 0 3px var(--primary-transparent);
+//   }
+// }
+
+// .refreshBtn {
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   width: 40px;
+//   height: 40px;
+//   background: var(--bg-surface);
+//   border: 1px solid var(--border);
+//   border-radius: var(--radius-md);
+//   color: var(--text-muted);
+//   cursor: pointer;
+//   transition: all var(--transition-fast);
+
+//   &:hover {
+//     background: var(--bg-surface-hover);
+//     color: var(--primary);
+//     border-color: var(--primary);
+//   }
+
+//   &:disabled {
+//     opacity: 0.5;
+//     cursor: not-allowed;
+//   }
+// }
+
+// .spinning {
+//   animation: spin 1s linear infinite;
+// }
+
+// .exportBtn {
+//   display: flex;
+//   align-items: center;
+//   gap: var(--spacing-sm);
+//   padding: 10px 20px;
+//   background: var(--primary);
+//   color: #ffffff;
+//   border: none;
+//   border-radius: var(--radius-md);
+//   font-weight: 600;
+//   font-size: 0.875rem;
+//   cursor: pointer;
+//   transition: all var(--transition-fast);
+
+//   &:hover {
+//     background: var(--primary-hover);
+//     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+//     transform: translateY(-1px);
+//   }
+// }
+
+// .statsGrid {
+//   display: grid;
+//   grid-template-columns: repeat(4, 1fr);
+//   gap: var(--spacing-xl);
+//   margin-bottom: var(--spacing-2xl);
+
+//   @media (max-width: 1200px) {
+//     grid-template-columns: repeat(2, 1fr);
+//   }
+
+//   @media (max-width: 640px) {
+//     grid-template-columns: 1fr;
+//   }
+// }
+
+// .statCard {
+//   @include glassmorphism;
+//   padding: var(--spacing-xl);
+//   border-radius: var(--radius-2xl);
+//   display: flex;
+//   align-items: center;
+//   gap: var(--spacing-lg);
+//   transition: transform var(--transition-fast);
+
+//   &:hover {
+//     transform: translateY(-5px);
+//   }
+// }
+
+// .icon {
+//   width: 50px;
+//   height: 50px;
+//   border-radius: var(--radius-xl);
+//   @include flex-center;
+//   flex-shrink: 0;
+
+//   &.primary { background: var(--primary-transparent); color: var(--primary); }
+//   &.success { background: var(--success-light); color: var(--success); }
+//   &.warning { background: var(--warning-light); color: var(--warning); }
+//   &.info { background: var(--info-light); color: var(--info); }
+// }
+
+// .statContent {
+//   flex: 1;
+// }
+
+// .statLabel {
+//   color: var(--text-muted);
+//   font-size: 0.9rem;
+//   font-weight: 600;
+//   margin: 0 0 4px 0;
+// }
+
+// .statValue {
+//   font-size: 1.5rem;
+//   font-weight: 800;
+//   color: var(--text-primary);
+//   margin: 0;
+// }
+
+// .change {
+//   display: inline-flex;
+//   align-items: center;
+//   gap: 2px;
+//   font-size: 0.8rem;
+//   font-weight: 700;
+//   padding: 2px 8px;
+//   border-radius: 100px;
+
+//   &.positive { background: var(--success-light); color: var(--success); }
+//   &.negative { background: var(--danger-light); color: var(--danger); }
+//   &.neutral { background: var(--bg-surface-hover); color: var(--text-muted); }
+// }
+
+// .reportsGrid {
+//   display: grid;
+//   grid-template-columns: 1fr 340px;
+//   gap: var(--spacing-2xl);
+
+//   @media (max-width: 1024px) {
+//     grid-template-columns: 1fr;
+//   }
+// }
+
+// // .reportSection {
+// //   @include glassmorphism;
+// //   padding: var(--spacing-xl);
+// //   border-radius: var(--radius-2xl);
+// // }
+// .reportSection {
+//   @include glassmorphism;
+//   padding: var(--spacing-xl);
+//   border-radius: var(--radius-2xl);
+//   min-height: 420px;
+//   display: flex;
+//   flex-direction: column;
+//   gap:20px;
+//   align-items: center;
+//   h3 {
+//     font-size: 1.25rem;
+//     font-weight: 700;
+//     color: var(--text-primary);
+//     margin: 0;
+//   }
+// }
+
+// .sectionHeader {
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   height: 100%;
+// }
+
+// .sectionIcon {
+//   color: var(--primary);
+// }
+
+// .metricsCard {
+//   .cardHeader {
+//     display: flex;
+//     justify-content: space-between;
+//     align-items: center;
+//     margin-bottom: var(--spacing-xl);
+
+//     h3 {
+//       font-size: 1.25rem;
+//       font-weight: 700;
+//       color: var(--text-primary);
+//       margin: 0;
+//     }
+//   }
+// }
+
+// .miniSelect {
+//   padding: 6px 12px;
+//   background: var(--bg-surface-hover);
+//   border: 1px solid var(--border);
+//   border-radius: var(--radius-md);
+//   color: var(--text-primary);
+//   font-size: 0.8rem;
+//   font-weight: 600;
+//   cursor: pointer;
+
+//   &:focus {
+//     outline: none;
+//     border-color: var(--primary);
+//   }
+// }
+
+// .metricList {
+//   display: flex;
+//   flex-direction: column;
+//   gap: var(--spacing-md);
+// }
+
+// .metricItem {
+//   display: flex;
+//   align-items: center;
+//   justify-content: space-between;
+//   padding: var(--spacing-md);
+//   background: var(--bg-surface-hover);
+//   border-radius: var(--radius-lg);
+//   transition: background var(--transition-fast);
+
+//   &:hover {
+//     background: var(--primary-transparent);
+//   }
+// }
+
+// .metricLabel {
+//   color: var(--text-secondary);
+//   font-weight: 600;
+//   font-size: 0.9rem;
+// }
+
+// .metricRight {
+//   text-align: right;
+//   display: flex;
+//   flex-direction: column;
+//   align-items: flex-end;
+//   gap: 4px;
+// }
+
+// .metricValue {
+//   color: var(--text-primary);
+//   font-weight: 700;
+//   font-size: 1.1rem;
+// }
+
+// @keyframes fadeIn {
+//   from { opacity: 0; transform: translateY(10px); }
+//   to { opacity: 1; transform: translateY(0); }
+// }
+
+// @keyframes spin {
+//   from { transform: rotate(0deg); }
+//   to { transform: rotate(360deg); }
+// }
+
+
+@use '../../styles/variables' as *;
+
+/* ── Page ───────────────────────────────────────────────────────────────── */
+.page {
+  animation: fadeIn var(--transition-slow);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-2xl);
+  gap: var(--spacing-lg);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+.headerContent {
+  h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.select {
+  padding: 8px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+
+  &:hover, &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-transparent);
+  }
+}
+
+.refreshBtn {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: var(--bg-surface-hover);
+  }
+}
+
+.spinning { animation: spin 0.9s linear infinite; }
+
+.exportBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 18px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 4px 14px rgba(37,99,235,0.4);
+    transform: translateY(-1px);
+  }
+}
+
+/* ── Stats grid — dynamic column counts ─────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+
+  /* default */
+  grid-template-columns: repeat(4, 1fr);
+
+  &.cols6 { grid-template-columns: repeat(6, 1fr); }
+  &.cols5 { grid-template-columns: repeat(5, 1fr); }
+  &.cols4 { grid-template-columns: repeat(4, 1fr); }
+  &.cols3 { grid-template-columns: repeat(3, 1fr); }
+
+  @media (max-width: 1300px) {
+    &.cols6, &.cols5 { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  @media (max-width: 700px) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  @media (max-width: 440px) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Stat card ──────────────────────────────────────────────────────────── */
+.statCard {
+  @include glassmorphism;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-2xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+
+  &:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+
+  &.skeleton {
+    min-height: 90px;
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 25%,
+      rgba(255,255,255,0.08) 50%,
+      rgba(255,255,255,0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border: 1px solid var(--border);
+  }
+}
+
+.iconBox {
+  width: 46px; height: 46px;
+  border-radius: var(--radius-xl);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+
+  &.primary { background: var(--primary-transparent); color: var(--primary); }
+  &.success { background: var(--success-light);        color: var(--success); }
+  &.danger  { background: var(--danger-light);         color: var(--danger);  }
+  &.warning { background: var(--warning-light);        color: var(--warning); }
+  &.info    { background: var(--info-light);           color: var(--info);    }
+  &.neutral { background: rgba(255,255,255,0.06);      color: var(--text-muted); }
+}
+
+.statBody { flex: 1; min-width: 0; }
+
+.statLabel {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statValue {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.1;
+}
+
+/* ── Reports grid ───────────────────────────────────────────────────────── */
+.reportsGrid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--spacing-2xl);
+  align-items: stretch;
+
+  @media (max-width: 1100px) { grid-template-columns: 1fr; }
+}
+
+/* ── Chart panel ────────────────────────────────────────────────────────── */
+.chartPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 440px;
+}
+
+/* ── Metrics panel ──────────────────────────────────────────────────────── */
+.metricsPanel {
+  @include glassmorphism;
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+}
+
+.miniSelect {
+  padding: 6px 10px;
+  background: var(--bg-surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus { outline: none; border-color: var(--primary); }
+}
+
+.metricList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.metricItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px var(--spacing-md);
+  background: var(--bg-surface-hover);
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+
+  &:hover { background: var(--primary-transparent); }
+}
+
+.metricLabel {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.metricRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.metricValue {
+  color: var(--text-primary);
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+
+  &.positive { background: var(--success-light); color: var(--success); }
+  &.negative { background: var(--danger-light);  color: var(--danger);  }
+  &.neutral  { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+}
+
+/* ── Animations ─────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}

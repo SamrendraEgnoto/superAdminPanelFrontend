@@ -1,0 +1,52 @@
+@use '../styles/variables' as *;
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-surface);
+  @include flex-center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.spinner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--primary);
+}
+
+.icon {
+  animation: spin 1s linear infinite;
+  &.sm { width: 16px; height: 16px; }
+  &.md { width: 32px; height: 32px; }
+  &.lg { width: 48px; height: 48px; }
+  &.xl { width: 64px; height: 64px; }
+}
+
+.text {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
