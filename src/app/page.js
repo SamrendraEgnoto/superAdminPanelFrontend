@@ -114,10 +114,10 @@ export default function Dashboard() {
   const chartStats = React.useMemo(() => {
     if (role === 'superadmin') {
       return {
-        secondary: stats.activeAdmins   || 0,
-        tertiary:  stats.inactiveAdmins || 0,
+        secondary: (stats.activeAdmins ?? stats.activeDataViewers)   || 0,
+        tertiary:  (stats.inactiveAdmins ?? stats.inactiveDataViewers) || 0,
         extra1:    stats.totalUsers     || 0,
-        extra2:    stats.totalLeads     || 0,
+        extra2:    (stats.totalLeads ?? stats.totalOwnLeads)     || 0,
       };
     }
     if (role === 'admin') {
@@ -141,13 +141,16 @@ export default function Dashboard() {
 
   /* ── Stat cards per role ─────────────────────────────────────────────── */
   const statCards = React.useMemo(() => {
-    if (role === 'superadmin') return [
-      { label: 'Total Admins',    value: stats.totalAdmins    || 0, icon: <UserCog      size={22}/>, trend: 'positive', sub: 'All admins'       },
-      { label: 'Active Admins',   value: stats.activeAdmins   || 0, icon: <CheckCircle2 size={22}/>, trend: 'positive', sub: 'Currently active'  },
-      { label: 'Inactive Admins', value: stats.inactiveAdmins || 0, icon: <XCircle      size={22}/>, trend: 'neutral',  sub: 'Inactive'          },
-      { label: 'Total Users',     value: stats.totalUsers     || 0, icon: <Users        size={22}/>, trend: 'positive', sub: 'Platform-wide'     },
-      { label: 'Total Leads',     value: stats.totalLeads     || 0, icon: <Building2    size={22}/>, trend: 'positive', sub: 'Platform-wide'     },
-    ];
+    if (role === 'superadmin') {
+      const isDSA = user?.dbRole === 'delegated' || user?.role === 'delegated';
+      return [
+        { label: 'Total Admins',    value: (stats.totalAdmins ?? stats.totalDataViewers) ?? 0,    icon: <UserCog      size={22}/>, trend: 'positive', sub: isDSA ? 'Your admins' : 'All admins'       },
+        { label: 'Active Admins',   value: (stats.activeAdmins ?? stats.activeDataViewers) ?? 0,   icon: <CheckCircle2 size={22}/>, trend: 'positive', sub: 'Currently active'  },
+        { label: 'Inactive Admins', value: (stats.inactiveAdmins ?? stats.inactiveDataViewers) ?? 0, icon: <XCircle      size={22}/>, trend: 'neutral',  sub: 'Inactive'          },
+        { label: 'Total Users',     value: stats.totalUsers ?? 0,                               icon: <Users        size={22}/>, trend: 'positive', sub: isDSA ? 'Your team' : 'Platform-wide'     },
+        { label: 'Total Leads',     value: (stats.totalLeads ?? stats.totalOwnLeads) ?? 0,        icon: <Building2    size={22}/>, trend: 'positive', sub: isDSA ? 'Your leads' : 'Platform-wide'     },
+      ];
+    }
 
     if (role === 'admin') return [
       { label: 'Total Users',     value: stats.totalUsers     || 0, icon: <Users        size={22}/>, trend: 'positive', sub: 'Your team'         },
@@ -220,10 +223,10 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className={styles.activityList}>
-              {recent.map(item => {
+              {recent.slice(0, 5).map(item => {
                 const isSA     = role === 'superadmin';
                 const isAdmin  = role === 'admin';
-                const title    = isSA ? item.companyName : isAdmin ? (item.clientName || item.buildingType || 'Lead') : item.buildingType;
+                const title    = isSA ? (item.companyName || item.email || 'Admin') : isAdmin ? (item.clientName || item.buildingType || 'Lead') : item.buildingType;
                 const sub      = isSA ? item.email : (item.userInfo?.email || item.clientEmail || 'N/A');
                 const status   = isSA ? (item.isActive ? 'Active' : 'Inactive') : (item.status || 'new');
                 const badgeCls = isSA
@@ -238,7 +241,7 @@ export default function Dashboard() {
                       </div>
                       <div className={styles.itemDetails}>
                         <span className={styles.itemTitle}>{title}</span>
-                        <span className={styles.itemSub}>{sub}</span>
+                   
                       </div>
                     </div>
                     <span className={`${styles.statusBadge} ${badgeCls}`}>{status}</span>

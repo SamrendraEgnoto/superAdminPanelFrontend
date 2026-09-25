@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext'; // Added hook
 import { Menu, Moon, Sun, User, LogOut, ChevronDown } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 import styles from './Navbar.module.scss';
 
 export default function Navbar({ collapsed, setCollapsed }) {
@@ -26,17 +27,17 @@ export default function Navbar({ collapsed, setCollapsed }) {
 
   const toggleTheme = () => {
     const next = isDark ? 'light' : 'dark';
-    updateSetting('appearance', 'theme', next);
-    // Auto-save appearance changes for best UX
-    saveSettings(); 
+    const updated = updateSetting('appearance', 'theme', next);
+    // Auto-save silently — no toast on theme toggle as requested
+    saveSettings(updated, { silent: true }); 
   };
 
   const handleBurgerClick = () => {
     const nextCollapsed = !collapsed;
     setCollapsed(nextCollapsed);
-    updateSetting('appearance', 'sidebarCollapsed', nextCollapsed);
-    // Auto-save for persistence
-    saveSettings();
+    const updated = updateSetting('appearance', 'sidebarCollapsed', nextCollapsed);
+    // Auto-save silently — no toast
+    saveSettings(updated, { silent: true });
   };
 
   return (
@@ -57,6 +58,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
       </div>
 
       <div className={styles.right}>
+        <NotificationBell />
         <button onClick={toggleTheme} className={styles.iconBtn} title="Toggle theme">
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>

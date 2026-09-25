@@ -214,20 +214,20 @@ export default function VerifyOtpPage() {
             <svg className={styles.threeDModel} viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor: '#2563eb', stopOpacity: 0.2}} />
-                  <stop offset="100%" style={{stopColor: '#0d9488', stopOpacity: 0.2}} />
+                  <stop offset="0%" style={{ stopColor: '#2563eb', stopOpacity: 0.2 }} />
+                  <stop offset="100%" style={{ stopColor: '#0d9488', stopOpacity: 0.2 }} />
                 </linearGradient>
               </defs>
               {/* 3D Building Structure */}
               <g transform="translate(200, 200)">
-                <rect x="-50" y="-100" width="100" height="200" fill="url(#buildingGrad)" stroke="#2563eb" strokeWidth="1" transform="rotate(15)"/>
-                <rect x="-50" y="-100" width="100" height="200" fill="url(#buildingGrad)" stroke="#0d9488" strokeWidth="1" transform="rotate(-15)"/>
-                <rect x="-50" y="-100" width="100" height="200" fill="none" stroke="rgba(37, 99, 235, 0.3)" strokeWidth="1"/>
+                <rect x="-50" y="-100" width="100" height="200" fill="url(#buildingGrad)" stroke="#2563eb" strokeWidth="1" transform="rotate(15)" />
+                <rect x="-50" y="-100" width="100" height="200" fill="url(#buildingGrad)" stroke="#0d9488" strokeWidth="1" transform="rotate(-15)" />
+                <rect x="-50" y="-100" width="100" height="200" fill="none" stroke="rgba(37, 99, 235, 0.3)" strokeWidth="1" />
                 {/* Windows */}
-                {Array.from({length: 5}).map((_, i) => (
+                {Array.from({ length: 5 }).map((_, i) => (
                   <React.Fragment key={i}>
-                    <rect x="-40" y={-80 + i * 30} width="15" height="20" fill="rgba(37, 99, 235, 0.3)"/>
-                    <rect x="25" y={-80 + i * 30} width="15" height="20" fill="rgba(37, 99, 235, 0.3)"/>
+                    <rect x="-40" y={-80 + i * 30} width="15" height="20" fill="rgba(37, 99, 235, 0.3)" />
+                    <rect x="25" y={-80 + i * 30} width="15" height="20" fill="rgba(37, 99, 235, 0.3)" />
                   </React.Fragment>
                 ))}
               </g>
@@ -240,7 +240,7 @@ export default function VerifyOtpPage() {
             </div>
           </div>
 
-          <h2 className={styles.authTitle}>3D Estimator Pro</h2>
+          <h2 className={styles.authTitle}>Grip Estimator</h2>
           <p className={styles.authDescription}>
             Secure email verification for your 3D estimation platform
           </p>
@@ -281,7 +281,7 @@ export default function VerifyOtpPage() {
 
             <div className={styles.fieldGroup}>
               <label className={styles.inputLabel}>
-                <Mail size={14} /> OTP Code
+                <Mail size={14} /> OTP Code <span className="requiredStar">*</span>
               </label>
               <input
                 type="text"

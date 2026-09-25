@@ -82,15 +82,16 @@ export const SettingsProvider = ({ children }) => {
     }
   };
 
-  const saveSettings = async (newSettings = settings) => {
+  const saveSettings = async (newSettings = settings, opts = {}) => {
+    const silent = opts.silent === true;
     try {
       setSaving(true);
       await settingsApi.updateSettings(newSettings);
       localStorage.setItem('appSettings', JSON.stringify(newSettings));
-      toast.success('Settings saved successfully');
+      if (!silent) toast.success('Settings saved successfully');
       return true;
     } catch (error) {
-      toast.error('Failed to save settings');
+      if (!silent) toast.error('Failed to save settings');
       return false;
     } finally {
       setSaving(false);

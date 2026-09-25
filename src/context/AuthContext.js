@@ -124,7 +124,12 @@ const normalizeRole = (roleFromBackend) => {
 
   const updateProfile = async (updates) => {
     try {
-      const response = await api.put('/auth/profile', updates)
+      const role = normalizeRole(user?.role)
+      let endpoint = '/auth/profile'
+      if (role === 'root' || role === 'superadmin') endpoint = '/superadmin/profile'
+      else if (role === 'admin') endpoint = '/admin/profile'
+      else if (role === 'user') endpoint = '/users/me'
+      const response = await api.put(endpoint, updates)
       const updatedData = response.data.data
       
       setUser({ ...user, ...updatedData })
@@ -132,10 +137,9 @@ const normalizeRole = (roleFromBackend) => {
       // Update cached profile data
       queryClient.setQueryData(queryKeys.profile(user?.role), updatedData)
       
-      toast.success('Profile updated successfully!')
       return { success: true, data: updatedData }
     } catch (error) {
-      toast.error('Failed to update profile')
+      toast.error(error.response?.data?.message || 'Failed to update profile')
       return { success: false, error: error.response?.data?.message }
     }
   }
@@ -150,7 +154,7 @@ const normalizeRole = (roleFromBackend) => {
     queryClient.clear()
     
     toast.success('Logged out successfully!')
-    window.location.href = '/login'
+    window.location.href = '/leadManager/login'
   }
 
   // Get cached profile data

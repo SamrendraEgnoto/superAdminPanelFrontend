@@ -4,12 +4,12 @@ import { toast } from 'react-hot-toast';
 // export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://adminpanel-server-hzzo.onrender.com';
 // export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export const api = axios.create({
-  baseURL: `${BASE_URL.replace(/\/$/, '')}/api`,
+  baseURL: `${(BASE_URL || '').replace(/\/$/, '')}/api`,
   timeout: 10000,
-  headers: { 'Content-Type': 'application/json' } 
+  headers: { 'Content-Type': 'application/json' }
 })
 
 // ===================== REQUEST INTERCEPTOR =====================
@@ -26,7 +26,7 @@ api.interceptors.request.use(
       if (passkey) config.headers['x-tenant-passkey'] = passkey
     }
     return config
-  },  
+  },
   (error) => Promise.reject(error)
 )
 
@@ -43,7 +43,10 @@ api.interceptors.response.use(
         localStorage.removeItem('token');
         localStorage.removeItem('role');
         localStorage.removeItem('passkey');
-        window.location.href = '/login';
+        // basePath-aware: /leadManager/login (not /login which hits root 3000)
+        if (!window.location.pathname.startsWith('/leadManager/login')) {
+          window.location.href = '/leadManager/login';
+        }
         return Promise.reject(error);
       }
 
@@ -51,7 +54,9 @@ api.interceptors.response.use(
         if (message.toLowerCase().includes('deactivated')) {
           toast.error(message);
           localStorage.removeItem('token');
-          window.location.href = '/login'; 
+          if (!window.location.pathname.startsWith('/leadManager/login')) {
+            window.location.href = '/leadManager/login';
+          }
         }
       }
 
@@ -96,26 +101,26 @@ api.interceptors.response.use(
 export const queryKeys = {
   // Dashboard
   dashboardStats: (role) => ['dashboard', 'stats', role],
-  
+
   // Users
   users: () => ['users'],
   user: (id) => ['users', id],
-  
+
   // Buildings/Leads
   buildings: (filters) => ['buildings', filters],
   building: (id) => ['buildings', id],
   userBuildings: (filters) => ['user-buildings', filters],
-  
+
   // Admins
   admins: (params) => ['admins', params],
   admin: (id) => ['admins', id],
-  
+
   // Reports
   reports: (params) => ['reports', params],
-  
+
   // Settings
   settings: () => ['settings'],
-  
+
   // Profile
   profile: (role) => ['profile', role],
 }
@@ -149,8 +154,14 @@ export const adminApi = {
   assignUsersToBuilding: (leadId, assignments) =>
     api.post(`/buildings/${leadId}/assign`, { assignments }),
 
-  getBuilding: (leadId) => api.get(`/buildings/${leadId}`),  
+  getBuilding: (leadId) => api.get(`/buildings/${leadId}`),
   getDashboard: () => api.get('/admin/dashboard'),
+
+  // Tenant Admin Personal Embed Keys (Admin created by Root)
+  listMyEmbedKeys: () => api.get('/admin/my-embed-keys'),
+  generateMyEmbedKey: (scope = 'create-lead-only') => api.post('/admin/my-embed-keys', { scope }),
+  rotateMyEmbedKey: (key) => api.post(`/admin/my-embed-keys/${key}/rotate`),
+  revokeMyEmbedKey: (key) => api.delete(`/admin/my-embed-keys/${key}/revoke`),
 }
 
 // ===================== SUPER ADMIN API ======================
@@ -163,6 +174,12 @@ export const superAdminApi = {
   updatePlan: (id, plan) => api.put(`/superadmin/admins/${id}/plan`, { plan }),
   toggleStatus: (id, isActive) => api.put(`/superadmin/admins/${id}/status`, { isActive }),
   getDashboardStats: () => api.get('/superadmin/dashboard/stats'),
+
+  // Tenant Admin embed keys management (by RSA)
+  getAdminEmbedKeys: (adminId) => api.get(`/superadmin/admins/${adminId}/embed-keys`),
+  generateAdminEmbedKey: (adminId, scope = 'create-lead-only') => api.post(`/superadmin/admins/${adminId}/embed-keys`, { scope }),
+  rotateAdminEmbedKey: (adminId, key) => api.post(`/superadmin/admins/${adminId}/embed-keys/${key}/rotate`),
+  revokeAdminEmbedKey: (adminId, key) => api.delete(`/superadmin/admins/${adminId}/embed-keys/${key}/revoke`),
 
   // Delegated Super Admin management (root only)
   getSuperAdmins: () => api.get('/superadmin/superadmins'),
@@ -193,5 +210,7 @@ export const settingsApi = {
 export const authApi = {
   verifyOtp: (data) => api.post('/auth/verify-otp', data),
   resendOtp: (email) => api.post('/auth/resend-otp', { email }),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
 }
 export default api;

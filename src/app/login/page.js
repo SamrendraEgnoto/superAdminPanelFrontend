@@ -2,18 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import api from '../../lib/api';
-import { Lock, Mail, ShieldAlert, LogIn, Building2, CheckCircle2, ShieldCheck, Zap, Box, Layers } from 'lucide-react';
+import { Lock, Mail, ShieldAlert, LogIn, Building2, CheckCircle2, ShieldCheck, Zap, Box, Layers, Eye, EyeOff } from 'lucide-react';
 import styles from './Login.module.scss';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 
-import { validateEmail, validateRequired } from '@/src/lib/validation'; 
+import { validateEmail, validateRequired } from '@/src/lib/validation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [passkey, setPasskey] = useState('');
+  const [showPasskey, setShowPasskey] = useState(false);
   const [role, setRole] = useState('root');
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -100,7 +102,7 @@ export default function LoginPage() {
         }
         router.push('/');
       }
-   
+
       else if (res.redirectToOtp) {
         router.push(`/verify-otp?email=${res.email}`);
       }
@@ -130,7 +132,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <h2 className={styles.authTitle}>3D Estimator Pro</h2>
+          <h2 className={styles.authTitle}>Grip Estimator</h2>
           <p className={styles.authDescription}>
             Advanced 3D estimation platform for construction professionals
           </p>
@@ -146,7 +148,7 @@ export default function LoginPage() {
         <div className={styles.rightPanel}>
           <div className={styles.header}>
             <h1>Welcome Back</h1>
-            <p>Login to manage your 3D Estimator projects</p>
+            <p>Login to manage your Grip Estimatorjects</p>
           </div>
 
           <form onSubmit={submit} className={styles.form}>
@@ -160,7 +162,7 @@ export default function LoginPage() {
             {/* EMAIL */}
             <div className={styles.fieldGroup}>
               <label className={styles.inputLabel}>
-                <Mail size={14} /> Email Address
+                <Mail size={14} /> Email Address <span className="requiredStar">*</span>
               </label>
               <input
                 type="email"
@@ -178,14 +180,25 @@ export default function LoginPage() {
             {/* PASSWORD */}
             <div className={styles.fieldGroup}>
               <label className={styles.inputLabel}>
-                <Lock size={14} /> Password
+                <Lock size={14} /> Password <span className="requiredStar">*</span>
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
+              <div className="passwordInputWrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  className="passwordToggleBtn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {fieldErrors.password && (
                 <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>
                   {fieldErrors.password}
@@ -195,27 +208,38 @@ export default function LoginPage() {
 
             {/* ROLE (UNCHANGED) */}
             <div className={styles.fieldGroup}>
-              <label className={styles.inputLabel}>Select Workspace Role</label>
-<select value={role} onChange={(e) => setRole(e.target.value)}>
-  <option value="root">Root</option>
-  <option value="superadmin">Super Admin</option>
-  <option value="admin">Admin</option>
-  <option value="user">User</option>
-</select>
+              <label className={styles.inputLabel}>Select Workspace Role <span className="requiredStar">*</span></label>
+              <select value={role} onChange={(e) => setRole(e.target.value)}>
+                <option value="root">Root</option>
+                <option value="superadmin">Super Admin</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
             </div>
 
             {/* PASSKEY — Only required for admin/superadmin/root (tenant encryption) */}
             {['admin', 'superadmin', 'root'].includes(role) && (
               <div className={styles.fieldGroup}>
                 <label className={styles.inputLabel}>
-                  <ShieldCheck size={14} /> Encryption Passkey
+                  <ShieldCheck size={14} /> Encryption Passkey <span className="requiredStar">*</span>
                 </label>
-                <input
-                  type="password"
-                  value={passkey}
-                  onChange={(e) => setPasskey(e.target.value)}
-                  placeholder="Your tenant encryption passkey"
-                />
+                <div className="passwordInputWrapper">
+                  <input
+                    type={showPasskey ? 'text' : 'password'}
+                    value={passkey}
+                    onChange={(e) => setPasskey(e.target.value)}
+                    placeholder="Your tenant encryption passkey"
+                  />
+                  <button
+                    type="button"
+                    className="passwordToggleBtn"
+                    onClick={() => setShowPasskey(!showPasskey)}
+                    aria-label={showPasskey ? 'Hide passkey' : 'Show passkey'}
+                    tabIndex={-1}
+                  >
+                    {showPasskey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 <span style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '4px', display: 'block' }}>
                   Set during onboarding. Required to decrypt lead data.
                 </span>
@@ -226,6 +250,11 @@ export default function LoginPage() {
               {loading ? 'Authenticating...' : (<><LogIn size={18} /> Sign In</>)}
             </button>
           </form>
+          <div style={{ textAlign: 'right', marginTop: '10px' }}>
+            <Link href="/forgot-password" prefetch={false} style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer' }}>
+              Forgot password?
+            </Link>
+          </div>
 
           <div className={styles.divider} />
           <div className={styles.footerText}>

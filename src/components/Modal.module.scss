@@ -9,9 +9,19 @@
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
   z-index: 9999;
-  @include flex-center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--spacing-md);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   animation: fadeIn 0.3s ease;
+
+  @media (max-height: 700px) {
+    align-items: flex-start;
+    padding-top: max(12px, 2vh);
+    padding-bottom: max(12px, 2vh);
+  }
 }
 
 .modal {
@@ -21,8 +31,23 @@
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-xl), var(--shadow-glow);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  max-height: 90dvh;
+  max-height: min(90vh, 800px);
   overflow: hidden;
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (max-height: 700px) {
+    max-height: 96vh;
+    max-height: 96dvh;
+  }
+
+  @media (max-width: 640px) {
+    max-height: 92vh;
+    max-height: 92dvh;
+  }
 }
 
 .header {
@@ -30,6 +55,8 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-md);
+  flex-shrink: 0;
+  border-bottom: 1px solid transparent;
 
   h3 {
     font-size: 1.25rem;
@@ -60,6 +87,32 @@
 
 .content {
   padding: 0 var(--spacing-xl) var(--spacing-xl);
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+
+  // Custom scrollbar — visible only when needed
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+    &:hover { background: var(--text-muted); }
+  }
+
+  @media (max-height: 700px) {
+    padding-bottom: var(--spacing-lg);
+  }
 }
 
 @keyframes fadeIn {

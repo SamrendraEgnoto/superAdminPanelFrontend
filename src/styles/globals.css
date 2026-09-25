@@ -127,3 +127,51 @@ body {
 
   color-scheme: light;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Universal Password Input Toggle & Required Asterisk Styles
+   ───────────────────────────────────────────────────────────── */
+.passwordInputWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.passwordInputWrapper input {
+  width: 100%;
+  padding-right: 44px !important;
+  box-sizing: border-box;
+}
+
+.passwordToggleBtn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, transform 0.15s ease;
+  z-index: 5;
+}
+
+.passwordToggleBtn:hover {
+  color: var(--text-primary, #f1f5f9);
+}
+
+.passwordToggleBtn:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.requiredStar {
+  color: #ef4444;
+  margin-left: 3px;
+  font-weight: 700;
+  display: inline-block;
+}

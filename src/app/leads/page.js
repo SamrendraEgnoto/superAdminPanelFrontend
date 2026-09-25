@@ -4,10 +4,14 @@ import React, { useEffect, useState } from 'react';
 import api from '@/src/lib/api';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import Modal from '@/src/components/Modal';
-import { RefreshCw, Trash2, Plus, Share2 } from 'lucide-react';
+import { RefreshCw, Trash2, Plus, Share2, Eye, EyeOff } from 'lucide-react';
 import styles from './Leads.module.scss';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
+import { validatePhone, sanitizePhone } from '@/src/lib/validation';
+import toast from 'react-hot-toast';
+import Pagination from '@/src/components/Pagination';
+import PhoneInput from '@/src/components/PhoneInput';
 
 const statusOptions = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'closed-won', 'closed-lost'];
 const initialUserForm = {
@@ -27,8 +31,11 @@ export default function LeadsPage() {
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true); 
   const [statusFilter, setStatusFilter] = useState('');
+  const pageSize = 5;
+  const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showUserPassword, setShowUserPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     buildingType: '',
@@ -117,6 +124,7 @@ export default function LeadsPage() {
       let data = res.data?.data || res.data || [];
       // Normalise: some responses are paginated { data: [...] }, some are arrays
       if (!Array.isArray(data)) data = [];
+      data = [...data].sort((a,b) => new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0));
       setLeads(data);
       setFiltered(data);
 
@@ -135,6 +143,10 @@ export default function LeadsPage() {
     if (!statusFilter) setFiltered(leads)
     else setFiltered(leads.filter(l => l.status === statusFilter))
   }, [statusFilter, leads])
+
+  useEffect(() => { setPage(1); }, [filtered.length, statusFilter]);
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+  const paginatedLeads = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this lead?')) return;
@@ -169,9 +181,47 @@ export default function LeadsPage() {
       alert(err?.response?.data?.message || 'Status update failed');
     }
   }
+
+  const loadAssignableUsers = async () => {
+    try {
+      const endpoint = user?.role === 'superadmin' ? '/superadmin/users' : '/users';
+      const res = await api.get(endpoint);
+      const data = res.data?.data || res.data || [];
+      setTeamUsers(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error('Failed to load users for assignee dropdown', e);
+    }
+  };
+
+  useEffect(() => {
+    if (user && isPrivileged) loadAssignableUsers();
+  }, [user]);
+
+  const updateAssignee = async (leadId, newUserId) => {
+    const prev = leads;
+    const newAssigneeUser = teamUsers.find(u => u._id === newUserId);
+    // optimistic update — show name immediately
+    setLeads(prev => prev.map(l => {
+      if (l._id !== leadId) return l;
+      if (!newUserId) return { ...l, assignedUsers: [] };
+      const assigned = newAssigneeUser ? { user: newAssigneeUser, permissions: ['read','edit','delete'] } : { user: newUserId, permissions: ['read','edit','delete'] };
+      return { ...l, assignedUsers: [assigned] };
+    }));
+    try {
+      const usersPayload = newUserId ? [{ userId: newUserId, permissions: ['read','edit','delete'] }] : [];
+      await api.post(`/buildings/${leadId}/assign`, { users: usersPayload });
+      toast.success(newUserId ? 'Assignee updated' : 'Lead unassigned');
+    } catch (err) {
+      console.error(err);
+      setLeads(prev);
+      toast.error(err.response?.data?.message || 'Assignee update failed');
+    }
+  };
   
   const handleCreateLead = async (e) => {
     e.preventDefault();
+    const phoneErr = validatePhone(form.userInfo.phoneNumber);
+    if (phoneErr) { toast.error(phoneErr); return; }
     setBusy(true);
 
     try {
@@ -200,6 +250,10 @@ export default function LeadsPage() {
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
+    if (userForm.phone) {
+      const phoneErr = validatePhone(userForm.phone);
+      if (phoneErr) { toast.error(phoneErr); return; }
+    }
     setBusy(true);
     try {
       const endpoint = user?.role === 'superadmin'
@@ -259,7 +313,7 @@ export default function LeadsPage() {
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create New Lead">
         <form onSubmit={handleCreateLead} className={styles.modalForm}>
           <div className="form-group">
-            <label>Building Type</label>
+            <label>Building Type <span className="requiredStar">*</span></label>
             <input
               value={form.buildingType}
               onChange={e => setForm({ ...form, buildingType: e.target.value })}
@@ -269,7 +323,7 @@ export default function LeadsPage() {
           </div>
           <div className={styles.formRow}>
             <div className="form-group">
-              <label>Client First Name</label>
+              <label>Client First Name <span className="requiredStar">*</span></label>
               <input
                 value={form.userInfo.firstName}
                 onChange={e => setForm({ ...form, userInfo: { ...form.userInfo, firstName: e.target.value } })}
@@ -278,7 +332,7 @@ export default function LeadsPage() {
               />
             </div>
             <div className="form-group">
-              <label>Client Last Name</label>
+              <label>Client Last Name <span className="requiredStar">*</span></label>
               <input
                 value={form.userInfo.lastName}
                 onChange={e => setForm({ ...form, userInfo: { ...form.userInfo, lastName: e.target.value } })}
@@ -288,7 +342,7 @@ export default function LeadsPage() {
             </div>
           </div>
           <div className="form-group">
-            <label>Client Email</label>
+            <label>Client Email <span className="requiredStar">*</span></label>
             <input
               value={form.userInfo.email}
               onChange={e => setForm({ ...form, userInfo: { ...form.userInfo, email: e.target.value } })}
@@ -298,12 +352,12 @@ export default function LeadsPage() {
             />
           </div>
           <div className="form-group">
-            <label>Client Phone</label>
-            <input
+            <label>Client Phone <span className="requiredStar">*</span></label>
+            <PhoneInput
               value={form.userInfo.phoneNumber}
               onChange={e => setForm({ ...form, userInfo: { ...form.userInfo, phoneNumber: e.target.value } })}
               required
-              placeholder="+1 (555) 000-0000"
+              placeholder="7 to 15 digits"
             />
           </div>
           <div className={styles.modalActions}>
@@ -320,12 +374,63 @@ export default function LeadsPage() {
       {/* User Modal */}
       <Modal isOpen={showUserModal} onClose={() => setShowUserModal(false)} title="Add New User">
         <form onSubmit={handleCreateUser} className={styles.modalForm}>
-          <input placeholder="First Name" value={userForm.firstName} onChange={e => setUserForm({ ...userForm, firstName: e.target.value })} required />
-          <input placeholder="Last Name" value={userForm.lastName} onChange={e => setUserForm({ ...userForm, lastName: e.target.value })} />
-          <input type="email" placeholder="Email" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} required />
-          <input type="password" placeholder="Password" value={userForm.password} onChange={e => setUserForm({ ...userForm, password: e.target.value })} required />
-          <input placeholder="Department" value={userForm.department} onChange={e => setUserForm({ ...userForm, department: e.target.value })} />
-          <input placeholder="Phone" value={userForm.phone} onChange={e => setUserForm({ ...userForm, phone: e.target.value })} />
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              First Name <span className="requiredStar">*</span>
+            </label>
+            <input placeholder="First Name" value={userForm.firstName} onChange={e => setUserForm({ ...userForm, firstName: e.target.value })} required />
+          </div>
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Last Name
+            </label>
+            <input placeholder="Last Name" value={userForm.lastName} onChange={e => setUserForm({ ...userForm, lastName: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Email <span className="requiredStar">*</span>
+            </label>
+            <input type="email" placeholder="Email" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} required />
+          </div>
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Password <span className="requiredStar">*</span>
+            </label>
+            <div className="passwordInputWrapper">
+              <input
+                type={showUserPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={userForm.password}
+                onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                required
+              />
+              <button
+                type="button"
+                className="passwordToggleBtn"
+                onClick={() => setShowUserPassword(!showUserPassword)}
+                aria-label={showUserPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showUserPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Department
+            </label>
+            <input placeholder="Department" value={userForm.department} onChange={e => setUserForm({ ...userForm, department: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Phone Number
+            </label>
+            <PhoneInput
+              value={userForm.phone}
+              onChange={e => setUserForm({ ...userForm, phone: e.target.value })}
+              placeholder="7 to 15 digits"
+            />
+          </div>
           <div className={styles.checkboxGroup}>
             <label className={styles.checkboxLabel}>
               <input type="checkbox" checked={userForm.canCreateSubUsers} onChange={e => setUserForm({ ...userForm, canCreateSubUsers: e.target.checked })} /> Can Create Sub-Users
@@ -385,27 +490,28 @@ export default function LeadsPage() {
       </Modal>
 
       {loading ? <LoadingSpinner /> : (
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Client Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Building Type</th>
-                <th>Status</th>
-                <th>Source</th>
-                <th>Priority</th>
-                <th>Est. Value</th>
-                <th>Actual Value</th>
-                <th>Assigned</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan="11" className={styles.empty}>No leads found</td></tr>
-              ) : filtered.map(lead => {
+        <>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Client Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Building Type</th>
+                  <th>Status</th>
+                  <th>Source</th>
+                  <th>Priority</th>
+                  <th>Est. Value</th>
+                  <th>Actual Value</th>
+                  {user?.role !== 'user' && <th>Assigned</th>}
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={user?.role !== 'user' ? "11" : "10"} className={styles.empty}>No leads found</td></tr>
+                ) : paginatedLeads.map(lead => {
                 const perms = getPermissions(lead);
 
                 return (
@@ -450,7 +556,29 @@ export default function LeadsPage() {
                     <td>{lead.priority || '—'}</td>
                     <td>{lead.estimatedValue != null ? `$${lead.estimatedValue}` : '—'}</td>
                     <td>{lead.actualValue != null ? `$${lead.actualValue}` : '—'}</td>
-                    <td>{lead.assignedUsers?.length || 0}</td>
+                    {user?.role !== 'user' && (
+                      <td>
+                        <select
+                          value={lead.assignedUsers?.[0]?.user?._id || lead.assignedUsers?.[0]?.user || ''}
+                          onClick={e => e.stopPropagation()}
+                          onChange={e => { e.stopPropagation(); updateAssignee(lead._id, e.target.value); }}
+                          className={styles.statusSelect}
+                          disabled={!perms.includes('edit') && !isPrivileged}
+                          style={{width:'100px', maxWidth:'100px', overflow:'hidden', textOverflow:'ellipsis'}}
+                        >
+                          <option value="">Unassigned</option>
+                          {teamUsers.map(u => (
+                            <option key={u._id} value={u._id}>{u.firstName}</option>
+                          ))}
+                          {lead.assignedUsers?.map(au => {
+                            const uid = typeof au.user === 'object' ? au.user?._id : au.user;
+                            const name = typeof au.user === 'object' ? (au.user?.firstName || '') : '';
+                            if (!uid || teamUsers.find(tu => tu._id === uid)) return null;
+                            return <option key={uid} value={uid}>{name || uid}</option>;
+                          })}
+                        </select>
+                      </td>
+                    )}
                     <td>
                       <div className={styles.actionButtons} onClick={e => e.stopPropagation()}>
                         {isDsa && (
@@ -481,6 +609,8 @@ export default function LeadsPage() {
             </tbody>
           </table>
         </div>
+          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalItems={filtered.length} pageSize={pageSize} />
+        </>
       )}
     </div>
   )

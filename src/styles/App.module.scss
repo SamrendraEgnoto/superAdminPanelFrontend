@@ -21,6 +21,11 @@
   &.collapsed {
     margin-left: var(--sidebar-width-collapsed);
   }
+
+  // Auth pages (login/register/verify-otp) have no sidebar — no left offset
+  &.authMain {
+    margin-left: 0;
+  }
 }
 
 .content {

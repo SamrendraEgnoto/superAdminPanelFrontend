@@ -2,6 +2,7 @@ import "../styles/globals.css";
 import "../styles/main.scss";
 import { AuthProvider } from "../context/AuthContext";
 import { SettingsProvider } from "../context/SettingsContext"; // Added provider
+import { NotificationProvider } from "../context/NotificationContext"; // Added notification provider
 import { Toaster } from "react-hot-toast";
 import QueryProvider from "./QueryProvider";
 
@@ -23,23 +24,25 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning>
         <QueryProvider>
           <AuthProvider>
-            <SettingsProvider> {/* Added Provider */}
-              <MainLayout>
-                {children}
-              </MainLayout>
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  style: {
-                    background: 'var(--card-bg)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '10px',
-                    fontSize: '0.9rem',
-                  },
-                }}
-              />
-            </SettingsProvider> {/* Added Provider closing tag */}
+            <SettingsProvider>
+              <NotificationProvider>
+                <MainLayout>
+                  {children}
+                </MainLayout>
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    style: {
+                      background: 'var(--card-bg)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '10px',
+                      fontSize: '0.9rem',
+                    },
+                  }}
+                />
+              </NotificationProvider>
+            </SettingsProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

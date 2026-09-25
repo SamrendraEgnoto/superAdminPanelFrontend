@@ -31,17 +31,17 @@ export default function ReportsPage() {
         const d = res.data?.data || {};
         return {
           cards: [
-            { label: 'Total Admins',    value: d.totalAdmins    || 0, icon: <UserCog    size={22}/>, variant: 'primary',  change: null },
-            { label: 'Active Admins',   value: d.activeAdmins   || 0, icon: <CheckCircle2 size={22}/>, variant: 'success', change: null },
-            { label: 'Inactive Admins', value: d.inactiveAdmins || 0, icon: <XCircle     size={22}/>, variant: 'danger',  change: null },
-            { label: 'Total Users',     value: d.totalUsers     || 0, icon: <Users        size={22}/>, variant: 'info',    change: null },
-            { label: 'Total Leads',     value: d.totalLeads     || 0, icon: <Building2    size={22}/>, variant: 'warning', change: null },
+            { label: 'Total Admins',    value: (d.totalAdmins ?? d.totalDataViewers) ?? 0,    icon: <UserCog    size={22}/>, variant: 'primary',  change: null },
+            { label: 'Active Admins',   value: (d.activeAdmins ?? d.activeDataViewers) ?? 0,   icon: <CheckCircle2 size={22}/>, variant: 'success', change: null },
+            { label: 'Inactive Admins', value: (d.inactiveAdmins ?? d.inactiveDataViewers) ?? 0, icon: <XCircle     size={22}/>, variant: 'danger',  change: null },
+            { label: 'Total Users',     value: d.totalUsers || 0,                           icon: <Users        size={22}/>, variant: 'info',    change: null },
+            { label: 'Total Leads',     value: (d.totalLeads ?? d.totalOwnLeads) ?? 0,        icon: <Building2    size={22}/>, variant: 'warning', change: null },
           ],
           chartStats: {
-            secondary: d.activeAdmins   || 0,
-            tertiary:  d.inactiveAdmins || 0,
+            secondary: (d.activeAdmins ?? d.activeDataViewers)   || 0,
+            tertiary:  (d.inactiveAdmins ?? d.inactiveDataViewers) || 0,
             extra1:    d.totalUsers     || 0,
-            extra2:    d.totalLeads     || 0,
+            extra2:    (d.totalLeads ?? d.totalOwnLeads)     || 0,
           },
         };
       }

@@ -53,11 +53,28 @@
 .tableWrapper {
   @include glassmorphism;
   border-radius: var(--radius-xl);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+    &:hover { background: var(--text-muted); }
+  }
 }
 
 .table {
   width: 100%;
+  min-width: 750px;
   border-collapse: collapse;
 
   thead {
@@ -71,6 +88,7 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      white-space: nowrap;
     }
   }
 
@@ -86,6 +104,7 @@
       font-size: 0.9rem;
       color: var(--text-secondary);
       border-bottom: 1px solid var(--border);
+      white-space: nowrap;
     }
   }
 }
@@ -167,6 +186,24 @@
     }
 
     &::placeholder { color: var(--text-muted); }
+  }
+}
+
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: #ef4444;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+
+  svg {
+    flex-shrink: 0;
   }
 }
 

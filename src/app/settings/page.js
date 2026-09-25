@@ -14,7 +14,7 @@ import styles from './Settings.module.scss';
 export default function SettingsPage() {
   const { user } = useAuth();
   const { settings, loading: fetching, saving: loading, updateSetting, saveSettings } = useSettings();
-  
+
   const [activeTab, setActiveTab] = useState('notifications');
   const [saved, setSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -69,27 +69,52 @@ export default function SettingsPage() {
         smtpPassword: '',
       },
     };
-    
+
     // Update each category
     Object.keys(defaults).forEach(category => {
       Object.keys(defaults[category]).forEach(key => {
         updateSetting(category, key, defaults[category][key]);
       });
     });
-    
+
     setHasChanges(true);
     toast.success('Settings reset to defaults (click save to persist)');
   };
 
+  // Role & Permission checks for 3D Embed Key:
+  // Allowed ONLY for:
+  //  1. Root Super Admin (RSA)
+  //  2. Delegated Super Admin (DSA)
+  //  3. Tenant Admin created by RSA (adminType === 'tenant' or not 'data-viewer')
+  // Blocked for:
+  //  - Data-viewer Admin created by DSA
+  //  - Regular Users
+  const isRoot = user?.role === 'root' || user?.isRoot || user?.dbRole === 'root';
+  const isDsa = !isRoot && (user?.role === 'superadmin' || user?.isDsa || user?.dbRole === 'delegated');
+  const isTenantAdmin = user?.role === 'admin' && user?.adminType !== 'data-viewer';
+  // Root Super Admin cannot see or generate embed keys. Only DSA or Tenant Admins (created by root) can.
+  const canAccessEmbedKey = Boolean(!isRoot && (isDsa || isTenantAdmin));
+
+  const getEmbedUrl = (key) => {
+    const k = key || 'YOUR_EMBED_KEY';
+    const base = (process.env.NEXT_PUBLIC_ESTIMATOR_URL || 'https://gripestimator.com/estimator-ai').replace(/\/+$/, '');
+    return `${base}/?tenant=${encodeURIComponent(k)}`;
+  };
+
+  const getIframeCode = (key) => {
+    return `<iframe \n  src="${getEmbedUrl(key)}" \n  width="100%" \n  height="820px" \n  frameborder="0" \n  allow="fullscreen" \n  title="3D Building Estimator">\n</iframe>`;
+  };
+
   const fetchEmbedKeys = async () => {
+    if (!canAccessEmbedKey) return;
     setLoadingKeys(true);
     try {
       if (user?.role === 'superadmin' || user?.role === 'delegated' || user?.role === 'root') {
         const res = await superAdminApi.listMyEmbedKeys();
         setEmbedKeys(res.data?.data || []);
       } else if (user?.role === 'admin') {
-        const prof = await api.get('/admin/profile');
-        setEmbedKeys(prof.data?.data?.embedKeys || []);
+        const res = await adminApi.listMyEmbedKeys();
+        setEmbedKeys(res.data?.data || []);
       }
     } catch (e) {
       console.error('Error fetching embed keys:', e);
@@ -100,14 +125,24 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (activeTab === 'embedKey') {
-      fetchEmbedKeys();
+      if (!canAccessEmbedKey) {
+        setActiveTab('notifications');
+      } else {
+        fetchEmbedKeys();
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, canAccessEmbedKey]);
 
   const handleGenerateKey = async () => {
+    if (!canAccessEmbedKey) return;
     setGeneratingKey(true);
     try {
-      const res = await superAdminApi.generateMyEmbedKey();
+      let res;
+      if (user?.role === 'admin') {
+        res = await adminApi.generateMyEmbedKey();
+      } else {
+        res = await superAdminApi.generateMyEmbedKey();
+      }
       const newKey = res.data?.data?.key;
       setRawGeneratedKey(newKey);
       toast.success('3D Estimator Embed Key generated successfully!');
@@ -140,7 +175,7 @@ export default function SettingsPage() {
     { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette size={18} /> },
     { id: 'integrations', label: 'Integrations', icon: <Mail size={18} /> },
-    { id: 'embedKey', label: '3D Embed Key', icon: <Code size={18} /> },
+    ...(canAccessEmbedKey ? [{ id: 'embedKey', label: '3D Embed Key', icon: <Code size={18} /> }] : []),
     { id: 'system', label: 'System', icon: <Database size={18} /> },
   ];
 
@@ -155,7 +190,7 @@ export default function SettingsPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}> 
+      <div className={styles.header}>
         <div className={styles.headerContent}>
           <h1>Settings</h1>
           <p>Manage your application preferences and configurations</p>
@@ -459,7 +494,7 @@ export default function SettingsPage() {
                           border: '1px solid var(--border)'
                         }}>
                           <code style={{ fontSize: '0.95rem', color: '#94a3b8', wordBreak: 'break-all', flex: 1 }}>
-                            {embedKeys[0].keyPrefix || embedKeys[0].key || 'Active Key Configured'}
+                            {embedKeys[0].key || embedKeys[0].keyPrefix || 'Active Key Configured'}
                           </code>
                           <button
                             onClick={() => handleCopy(embedKeys[0].key || embedKeys[0].keyPrefix, 'key')}
@@ -536,17 +571,10 @@ export default function SettingsPage() {
                         overflowX: 'auto',
                         border: '1px solid #1e293b'
                       }}>
-{`<iframe
-  src="${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/?tenant=${rawGeneratedKey || (embedKeys[0]?.key || embedKeys[0]?.keyPrefix || 'YOUR_EMBED_KEY')}"
-  width="100%"
-  height="820px"
-  frameborder="0"
-  allow="fullscreen"
-  title="3D Building Estimator"
-></iframe>`}
+                        {getIframeCode(rawGeneratedKey || embedKeys[0]?.key || embedKeys[0]?.keyPrefix || 'YOUR_EMBED_KEY')}
                       </pre>
                       <button
-                        onClick={() => handleCopy(`<iframe src="${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/?tenant=${rawGeneratedKey || (embedKeys[0]?.key || embedKeys[0]?.keyPrefix || 'YOUR_EMBED_KEY')}" width="100%" height="820px" frameborder="0" allow="fullscreen" title="3D Building Estimator"></iframe>`, 'iframe')}
+                        onClick={() => handleCopy(getIframeCode(rawGeneratedKey || embedKeys[0]?.key || embedKeys[0]?.keyPrefix || 'YOUR_EMBED_KEY'), 'iframe')}
                         style={{
                           position: 'absolute',
                           top: 10,

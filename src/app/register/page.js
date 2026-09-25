@@ -289,7 +289,7 @@
 //             </div>
 //           </div>
 
-//           <h2 className={styles.authTitle}>Join 3D Estimator Pro</h2>
+//           <h2 className={styles.authTitle}>Join Grip Estimator</h2>
 //           <p className={styles.authDescription}>
 //             Create your admin account to access advanced 3D estimation tools
 //           </p>
@@ -439,11 +439,11 @@
 
 import React, { useState, useEffect } from 'react';
 import api from '@/src/lib/api';
-import { UserPlus, Mail, Lock, Building2, User, CheckCircle2, ShieldCheck, Zap, Box, Layers } from 'lucide-react';
+import { UserPlus, Mail, Lock, Building2, User, CheckCircle2, ShieldCheck, Zap, Box, Layers, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from '@/src/app/login/Login.module.scss';
-import {validateEmail,validatePassword,validateName,validateRequired} from '@/src/lib/validation'; 
+import { validateEmail, validatePassword, validateName, validateRequired } from '@/src/lib/validation';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -455,6 +455,7 @@ export default function RegisterPage() {
     role: 'admin',
   })
 
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -550,20 +551,20 @@ export default function RegisterPage() {
             <svg className={styles.threeDModel} viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor: '#2563eb', stopOpacity: 0.2}} />
-                  <stop offset="100%" style={{stopColor: '#0d9488', stopOpacity: 0.2}} />
+                  <stop offset="0%" style={{ stopColor: '#2563eb', stopOpacity: 0.2 }} />
+                  <stop offset="100%" style={{ stopColor: '#0d9488', stopOpacity: 0.2 }} />
                 </linearGradient>
               </defs>
 
               <g transform="translate(200, 200)">
-                <rect x="-50" y="-100" width="100" height="200" fill="url(#buildingGrad)" stroke="#2563eb" strokeWidth="1" transform="rotate(15)"/>
-                <rect x="-50" y="-100" width="100" height="200" fill="url(#buildingGrad)" stroke="#0d9488" strokeWidth="1" transform="rotate(-15)"/>
-                <rect x="-50" y="-100" width="100" height="200" fill="none" stroke="rgba(37, 99, 235, 0.3)" strokeWidth="1"/>
+                <rect x="-50" y="-100" width="100" height="200" fill="url(#buildingGrad)" stroke="#2563eb" strokeWidth="1" transform="rotate(15)" />
+                <rect x="-50" y="-100" width="100" height="200" fill="url(#buildingGrad)" stroke="#0d9488" strokeWidth="1" transform="rotate(-15)" />
+                <rect x="-50" y="-100" width="100" height="200" fill="none" stroke="rgba(37, 99, 235, 0.3)" strokeWidth="1" />
 
-                {Array.from({length: 5}).map((_, i) => (
+                {Array.from({ length: 5 }).map((_, i) => (
                   <React.Fragment key={i}>
-                    <rect x="-40" y={-80 + i * 30} width="15" height="20" fill="rgba(37, 99, 235, 0.3)"/>
-                    <rect x="25" y={-80 + i * 30} width="15" height="20" fill="rgba(37, 99, 235, 0.3)"/>
+                    <rect x="-40" y={-80 + i * 30} width="15" height="20" fill="rgba(37, 99, 235, 0.3)" />
+                    <rect x="25" y={-80 + i * 30} width="15" height="20" fill="rgba(37, 99, 235, 0.3)" />
                   </React.Fragment>
                 ))}
               </g>
@@ -576,7 +577,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <h2 className={styles.authTitle}>Join 3D Estimator Pro</h2>
+          <h2 className={styles.authTitle}>Join Grip Estimator</h2>
           <p className={styles.authDescription}>
             Create your admin account to access advanced 3D estimation tools
           </p>
@@ -605,7 +606,7 @@ export default function RegisterPage() {
 
             <div className={styles.row}>
               <div className={styles.fieldGroup}>
-                <label className={styles.inputLabel}><User size={14} /> First Name</label>
+                <label className={styles.inputLabel}><User size={14} /> First Name <span className="requiredStar">*</span></label>
                 <input
                   type="text"
                   value={form.firstName}
@@ -616,7 +617,7 @@ export default function RegisterPage() {
               </div>
 
               <div className={styles.fieldGroup}>
-                <label className={styles.inputLabel}><User size={14} /> Last Name</label>
+                <label className={styles.inputLabel}><User size={14} /> Last Name <span className="requiredStar">*</span></label>
                 <input
                   type="text"
                   value={form.lastName}
@@ -628,7 +629,7 @@ export default function RegisterPage() {
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.inputLabel}><Mail size={14} /> Email Address</label>
+              <label className={styles.inputLabel}><Mail size={14} /> Email Address <span className="requiredStar">*</span></label>
               <input
                 type="email"
                 value={form.email}
@@ -639,18 +640,29 @@ export default function RegisterPage() {
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.inputLabel}><Lock size={14} /> Password</label>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder="••••••••"
-              />
+              <label className={styles.inputLabel}><Lock size={14} /> Password <span className="requiredStar">*</span></label>
+              <div className="passwordInputWrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  className="passwordToggleBtn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {fieldErrors.password && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{fieldErrors.password}</span>}
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.inputLabel}><Building2 size={14} /> Company Name</label>
+              <label className={styles.inputLabel}><Building2 size={14} /> Company Name <span className="requiredStar">*</span></label>
               <input
                 type="text"
                 value={form.companyName}
@@ -661,7 +673,7 @@ export default function RegisterPage() {
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.inputLabel}>Role</label>
+              <label className={styles.inputLabel}>Role <span className="requiredStar">*</span></label>
               <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}

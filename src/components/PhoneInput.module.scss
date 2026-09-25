@@ -1,0 +1,84 @@
+.phoneInputGroup {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  background: var(--input-bg, #0f172a);
+  border: 1px solid var(--border, #334155);
+  border-radius: var(--radius-md, 8px);
+  transition: all var(--transition-fast, 0.15s ease);
+  overflow: hidden;
+
+  &:focus-within {
+    border-color: var(--primary, #2563eb);
+    box-shadow: 0 0 0 3px var(--primary-transparent, rgba(37, 99, 235, 0.15));
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--bg-surface-hover, #1e293b);
+  }
+}
+
+.countrySelect {
+  height: 42px;
+  padding: 0 8px 0 10px;
+  background: var(--bg-surface, #1e293b);
+  border: none;
+  border-right: 1px solid var(--border, #334155);
+  color: var(--text-primary, #f8fafc);
+  font-size: 0.85rem;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  max-width: 135px;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-surface-hover, #334155);
+  }
+
+  &:focus {
+    background: var(--bg-surface-hover, #334155);
+  }
+
+  option {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 6px;
+  }
+}
+
+.phoneInputField {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 10px 14px;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-primary, #f8fafc);
+  font-size: 0.925rem;
+  outline: none !important;
+  box-shadow: none !important;
+
+  &::placeholder {
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.875rem;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--text-muted, #94a3b8);
+  }
+}
+
+.digitIndicator {
+  padding-right: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  user-select: none;
+  white-space: nowrap;
+}

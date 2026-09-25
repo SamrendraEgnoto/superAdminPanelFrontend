@@ -32,13 +32,27 @@ export default function MainLayout({ children }) {
   //   [pathname]
   // );
 
-  const isAuthPage = useMemo(
-    () =>
-      pathname === '/login' ||
-      pathname === '/register' ||
-      pathname === '/verify-otp',
-    [pathname]
-  );
+  const isAuthPage = useMemo(() => {
+    const p = pathname || '';
+    // basePath-aware: Next may return /login or /leadManager/login depending on router
+    return (
+      p === '/login' ||
+      p === '/leadManager/login' ||
+      p.endsWith('/login') ||
+      p === '/register' ||
+      p === '/leadManager/register' ||
+      p.endsWith('/register') ||
+      p === '/verify-otp' ||
+      p === '/leadManager/verify-otp' ||
+      p.endsWith('/verify-otp') ||
+      p === '/forgot-password' ||
+      p === '/leadManager/forgot-password' ||
+      p.endsWith('/forgot-password') ||
+      p === '/reset-password' ||
+      p === '/leadManager/reset-password' ||
+      p.endsWith('/reset-password')
+    );
+  }, [pathname]);
 
   useEffect(() => {
     if (!authChecked) return; 
@@ -76,7 +90,7 @@ export default function MainLayout({ children }) {
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       )}
 
-      <div className={`${styles.main} ${collapsed ? styles.collapsed : ''}`}>
+      <div className={`${styles.main} ${isAuthPage ? styles.authMain : collapsed ? styles.collapsed : ''}`}>
         {showNavigation && (
           <Navbar collapsed={collapsed} setCollapsed={setCollapsed} />
         )}

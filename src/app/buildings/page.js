@@ -6,6 +6,10 @@ import Modal from '@/src/components/Modal'
 import { useAuth } from '@/src/context/AuthContext'
 import { Building2, Plus, Search, RefreshCw, Edit2, Trash2, Mail, Phone, User as UserIcon } from 'lucide-react';
 import styles from './Buildings.module.scss'
+import Pagination from '@/src/components/Pagination'
+import { validatePhone, sanitizePhone } from '@/src/lib/validation'
+import toast from 'react-hot-toast'
+import PhoneInput from '@/src/components/PhoneInput'
 
 export default function BuildingsPage() {
   const { user } = useAuth()
@@ -29,8 +33,9 @@ export default function BuildingsPage() {
       const endpoint = ['admin', 'superadmin'].includes(user?.role?.toLowerCase()) ? '/buildings' : '/users/buildings';
       const r = await api.get(endpoint)
       const data = r.data?.data || r.data || []
-      setList(data)
-      setFiltered(data)
+      const sorted = [...data].sort((a,b) => new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0))
+      setList(sorted)
+      setFiltered(sorted)
     } catch (err) {
       console.error(err)
       setList([])
@@ -53,6 +58,9 @@ export default function BuildingsPage() {
 
   const submit = async e => {
     e && e.preventDefault()
+    // Phone validation: exactly 10 digits, no alphabets/special
+    const phoneErr = validatePhone(form.userInfo.phoneNumber)
+    if (phoneErr) { toast.error(phoneErr); return }
     setBusy(true)
     try {
       const payload = {
@@ -143,7 +151,12 @@ export default function BuildingsPage() {
           </div>
           <div className="form-group">
             <label>Client Phone</label>
-            <input value={form.userInfo.phoneNumber} onChange={e => setForm({ ...form, userInfo: { ...form.userInfo, phoneNumber: e.target.value } })} required placeholder="+1 (555) 000-0000" />
+            <PhoneInput
+              value={form.userInfo.phoneNumber}
+              onChange={e => setForm({ ...form, userInfo: { ...form.userInfo, phoneNumber: e.target.value } })}
+              required
+              placeholder="7 to 15 digits"
+            />
           </div>
           <div className={styles.formActions}>
             <button className={styles.btnPrimary} type="submit" disabled={busy} style={{ flex: 1 }}>

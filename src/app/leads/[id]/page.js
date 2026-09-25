@@ -8,6 +8,9 @@ import AssignUserModal from '@/src/components/Modals/AssignUserModal';
 import styles from './LeadDetails.module.scss';
 import { ArrowLeft, Save, UserPlus } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
+import PhoneInput from '@/src/components/PhoneInput';
+import { validatePhone } from '@/src/lib/validation';
+import toast from 'react-hot-toast';
 
 export default function LeadDetailsPage({ params }) {
   const { id } = use(params);
@@ -64,18 +67,28 @@ export default function LeadDetailsPage({ params }) {
   };
 
   const handleUpdate = async () => {
+    if (lead?.userInfo?.phoneNumber) {
+      const phoneErr = validatePhone(lead.userInfo.phoneNumber);
+      if (phoneErr) {
+        toast.error(phoneErr);
+        return;
+      }
+    }
     setSaving(true);
     try {
-      await api.put(`/buildings/${id}`, {
+      const res = await api.put(`/buildings/${id}`, {
         buildingType: lead.buildingType,
         status: lead.status,
         userInfo: lead.userInfo,
         attributes: lead.attributes
       });
+      // Use returned data to keep UI in sync, then refetch to ensure persistence
+      if (res.data?.data) setLead(res.data.data);
+      await loadLead();
       alert('Lead updated successfully');
     } catch (err) {
       console.error(err);
-      alert('Update failed');
+      alert(err.response?.data?.message || 'Update failed');
     } finally {
       setSaving(false);
     }
@@ -183,11 +196,12 @@ export default function LeadDetailsPage({ params }) {
 
               <div className={styles.field}>
                 <label>Phone</label>
-                <input
+                <PhoneInput
                   name="userInfo.phoneNumber"
                   value={lead.userInfo?.phoneNumber || ''}
                   onChange={handleChange}
                   disabled={!permissions.includes('edit')}
+                  placeholder="7 to 15 digits"
                 />
               </div>
             </div>
