@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { superAdminApi, adminApi, api, queryKeys } from '@/src/lib/api';
 import Charts from '@/src/components/Charts';
@@ -32,8 +33,10 @@ function StatCard({ label, value, icon, trend = 'positive', sub, loading }) {
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const { user } = useAuth();
   const role = (user?.role === 'root' || user?.role === 'delegated') ? 'superadmin' : user?.role;
+  const [activityTab, setActivityTab] = React.useState('admins');
 
   /* ── Data fetch ──────────────────────────────────────────────────────── */
   const { data: dashboardData, isLoading: statsLoading, refetch: refetchDashboard } = useQuery({
@@ -42,13 +45,15 @@ export default function Dashboard() {
 
       /* SUPERADMIN */
       if (role === 'superadmin') {
-        const [statsRes, adminsRes] = await Promise.all([
+        const [statsRes, adminsRes, usersRes] = await Promise.all([
           superAdminApi.getDashboardStats(),
           superAdminApi.getAdmins({ limit: 5, sort: '-createdAt' }),
+          superAdminApi.getUsers({ limit: 5 }).catch(() => ({ data: { data: [] } })),
         ]);
         return {
           stats: statsRes.data?.data || {},
           recent: adminsRes.data?.data || adminsRes.data || [],
+          recentUsers: usersRes.data?.data || usersRes.data || [],
         };
       }
 
@@ -109,6 +114,7 @@ export default function Dashboard() {
 
   const stats  = dashboardData?.stats  || {};
   const recent = dashboardData?.recent || [];
+  const recentUsers = dashboardData?.recentUsers || [];
 
   /* ── Per-role chart stats (passed to Charts) ─────────────────────────── */
   const chartStats = React.useMemo(() => {
@@ -201,7 +207,36 @@ export default function Dashboard() {
         <div className={styles.activitySection}>
           <div className={styles.activityHeader}>
             <h3>Recent Activity</h3>
-            <button className={styles.viewAllBtn}>View All</button>
+            <div className={styles.activityHeaderControls}>
+              {role === 'superadmin' && (
+                <div className={styles.activityTabs}>
+                  <button
+                    className={`${styles.activityTabBtn} ${activityTab === 'admins' ? styles.activeTab : ''}`}
+                    onClick={() => setActivityTab('admins')}
+                  >
+                    Admins
+                  </button>
+                  <button
+                    className={`${styles.activityTabBtn} ${activityTab === 'users' ? styles.activeTab : ''}`}
+                    onClick={() => setActivityTab('users')}
+                  >
+                    Team Users
+                  </button>
+                </div>
+              )}
+              <button
+                className={styles.viewAllBtn}
+                onClick={() => {
+                  if (role === 'superadmin') {
+                    router.push(activityTab === 'admins' ? '/admins' : '/users');
+                  } else {
+                    router.push('/leads');
+                  }
+                }}
+              >
+                View All
+              </button>
+            </div>
           </div>
 
           {statsLoading ? (
@@ -210,6 +245,37 @@ export default function Dashboard() {
                 <div key={i} className={styles.skeletonItem} />
               ))}
             </div>
+          ) : (role === 'superadmin' && activityTab === 'users') ? (
+            recentUsers.length === 0 ? (
+              <div className={styles.emptyState}>
+                <AlertCircle size={38} className={styles.emptyIcon} />
+                <p>No team users registered yet.</p>
+              </div>
+            ) : (
+              <div className={styles.activityList}>
+                {recentUsers.slice(0, 5).map(u => {
+                  const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || 'Team User';
+                  const sub = u.email ? `${u.email}${u.role ? ' • ' + u.role : ''}` : (u.role || 'user');
+                  const isActive = u.isActive !== false;
+                  return (
+                    <div key={u._id} className={styles.activityItem}>
+                      <div className={styles.itemLeft}>
+                        <div className={styles.itemIcon}>
+                          <Users size={17} />
+                        </div>
+                        <div className={styles.itemDetails}>
+                          <span className={styles.itemTitle}>{name}</span>
+                          <span className={styles.itemSub}>{sub}</span>
+                        </div>
+                      </div>
+                      <span className={`${styles.statusBadge} ${isActive ? styles.completed : styles.cancelled}`}>
+                        {isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )
           ) : recent.length === 0 ? (
             <div className={styles.emptyState}>
               <AlertCircle size={38} className={styles.emptyIcon} />
@@ -227,7 +293,7 @@ export default function Dashboard() {
                 const isSA     = role === 'superadmin';
                 const isAdmin  = role === 'admin';
                 const title    = isSA ? (item.companyName || item.email || 'Admin') : isAdmin ? (item.clientName || item.buildingType || 'Lead') : item.buildingType;
-                const sub      = isSA ? item.email : (item.userInfo?.email || item.clientEmail || 'N/A');
+                const sub      = isSA ? (item.email || 'Admin') : (item.userInfo?.email || item.clientEmail || 'N/A');
                 const status   = isSA ? (item.isActive ? 'Active' : 'Inactive') : (item.status || 'new');
                 const badgeCls = isSA
                   ? (item.isActive ? styles.completed : styles.cancelled)
@@ -241,7 +307,7 @@ export default function Dashboard() {
                       </div>
                       <div className={styles.itemDetails}>
                         <span className={styles.itemTitle}>{title}</span>
-                   
+                        <span className={styles.itemSub}>{sub}</span>
                       </div>
                     </div>
                     <span className={`${styles.statusBadge} ${badgeCls}`}>{status}</span>

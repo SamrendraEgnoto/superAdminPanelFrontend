@@ -4,12 +4,14 @@ import React, { useEffect, useState } from 'react'
 import api from '@/src/lib/api'
 import Modal from '@/src/components/Modal'
 import { useAuth } from '@/src/context/AuthContext'
-import { Building2, Plus, Search, RefreshCw, Edit2, Trash2, Mail, Phone, User as UserIcon } from 'lucide-react';
+import { Building2, Plus, Search, RefreshCw, Edit2, Trash2, Mail, Phone, User as UserIcon, Download } from 'lucide-react';
 import styles from './Buildings.module.scss'
 import Pagination from '@/src/components/Pagination'
 import { validatePhone, sanitizePhone } from '@/src/lib/validation'
 import toast from 'react-hot-toast'
 import PhoneInput from '@/src/components/PhoneInput'
+import { exportToCsv } from '@/src/lib/exportCsv'
+import SearchableSelect from '@/src/components/SearchableSelect'
 
 export default function BuildingsPage() {
   const { user } = useAuth()
@@ -26,6 +28,18 @@ export default function BuildingsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
+
+  const handleExportCsv = () => {
+    const headers = [
+      { label: 'Client Name', accessor: (b) => `${b.userInfo?.firstName || ''} ${b.userInfo?.lastName || ''}`.trim() || 'Lead' },
+      { label: 'Email', accessor: (b) => b.userInfo?.email || '' },
+      { label: 'Phone', accessor: (b) => b.userInfo?.phoneNumber || b.userInfo?.phone || '' },
+      { label: 'Building Type', key: 'buildingType' },
+      { label: 'Status', key: 'status' },
+      { label: 'Created At', accessor: (b) => b.createdAt ? new Date(b.createdAt).toLocaleDateString() : '' }
+    ];
+    exportToCsv('BuildingLeads', headers, filtered);
+  };
 
   const load = async () => {
     setLoading(true)
@@ -51,9 +65,13 @@ export default function BuildingsPage() {
 
   useEffect(() => {
     const q = search.toLowerCase()
-    setFiltered(list.filter(i =>
-      ((i.buildingType || '') + (i.userInfo?.email || '')).toLowerCase().includes(q)
-    ))
+    setFiltered(list.filter(i => {
+      const name = `${i.userInfo?.firstName || ''} ${i.userInfo?.lastName || ''}`.toLowerCase();
+      const email = String(i.userInfo?.email || '').toLowerCase();
+      const phone = String(i.userInfo?.phoneNumber || i.userInfo?.phone || '').toLowerCase();
+      const bType = String(i.buildingType || '').toLowerCase();
+      return name.includes(q) || email.includes(q) || phone.includes(q) || bType.includes(q);
+    }))
   }, [search, list])
 
   const submit = async e => {
@@ -109,7 +127,10 @@ export default function BuildingsPage() {
               <Plus size={18} /> New Lead
             </button>
           )}
-          <button className={styles.btnSecondary} onClick={load}>
+          <button className={styles.btnSecondary} onClick={handleExportCsv} title="Export CSV">
+            <Download size={18} /> Export CSV
+          </button>
+          <button className={styles.btnSecondary} onClick={load} title="Refresh">
             <RefreshCw size={18} />
           </button>
         </div>
@@ -128,12 +149,16 @@ export default function BuildingsPage() {
           </div>
           <div className="form-group">
             <label>Lead Status</label>
-            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
-              <option value="new">New</option>
-              <option value="contacted">Contacted</option>
-              <option value="quoted">Quoted</option>
-              <option value="closed">Closed</option>
-            </select>
+            <SearchableSelect
+              value={form.status}
+              onChange={val => setForm({ ...form, status: val })}
+              options={[
+                { value: 'new', label: 'New' },
+                { value: 'contacted', label: 'Contacted' },
+                { value: 'quoted', label: 'Quoted' },
+                { value: 'closed', label: 'Closed' }
+              ]}
+            />
           </div>
           <div className={styles.formRow}>
             <div className="form-group">

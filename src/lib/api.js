@@ -197,6 +197,12 @@ export const superAdminApi = {
   getDsaLeads: (params = {}) => api.get('/superadmin/leads', { params }),
   shareLeads: (leadIds, adminId, note = '') => api.post('/superadmin/leads/share', { leadIds, adminId, note }),
   unshareLead: (leadId, adminId) => api.delete(`/superadmin/leads/${leadId}/share/${adminId}`),
+
+  // DSA / Branch Users
+  getUsers: (params) => api.get('/superadmin/users', { params }),
+  createUser: (data) => api.post('/superadmin/users', data),
+  updateUser: (id, data) => api.put(`/superadmin/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/superadmin/users/${id}`),
 }
 
 

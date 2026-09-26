@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import api from '@/src/lib/api';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import Modal from '@/src/components/Modal';
-import { RefreshCw, Trash2, Plus, Share2, Eye, EyeOff } from 'lucide-react';
+import { RefreshCw, Trash2, Plus, Share2, Eye, EyeOff, Search, Download } from 'lucide-react';
 import styles from './Leads.module.scss';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
@@ -12,6 +12,8 @@ import { validatePhone, sanitizePhone } from '@/src/lib/validation';
 import toast from 'react-hot-toast';
 import Pagination from '@/src/components/Pagination';
 import PhoneInput from '@/src/components/PhoneInput';
+import { exportToCsv } from '@/src/lib/exportCsv';
+import SearchableSelect from '@/src/components/SearchableSelect';
 
 const statusOptions = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'closed-won', 'closed-lost'];
 const initialUserForm = {
@@ -135,16 +137,48 @@ export default function LeadsPage() {
     }
   };
 
+  const [search, setSearch] = useState('');
+
+  const handleExportCsv = () => {
+    const headers = [
+      { label: 'Client Name', accessor: (l) => `${l.firstName || l.userInfo?.firstName || ''} ${l.lastName || l.userInfo?.lastName || ''}`.trim() || 'Lead' },
+      { label: 'Email', accessor: (l) => l.email || l.userInfo?.email || '' },
+      { label: 'Phone', accessor: (l) => l.phone || l.userInfo?.phoneNumber || l.userInfo?.phone || '' },
+      { label: 'Building Type', key: 'buildingType' },
+      { label: 'Status', key: 'status' },
+      { label: 'Source', key: 'source' },
+      { label: 'Priority', key: 'priority' },
+      { label: 'Estimated Value', key: 'estimatedValue' },
+      { label: 'Actual Value', key: 'actualValue' },
+      { label: 'Created At', accessor: (l) => l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '' }
+    ];
+    exportToCsv('Leads', headers, filtered);
+  };
+
   useEffect(() => {
     if (user) loadLeads();
-  }, [user])
+  }, [user]);
 
   useEffect(() => {
-    if (!statusFilter) setFiltered(leads)
-    else setFiltered(leads.filter(l => l.status === statusFilter))
-  }, [statusFilter, leads])
+    let result = leads;
+    if (statusFilter) {
+      result = result.filter(l => l.status === statusFilter);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(l => {
+        const name = `${l.firstName || l.userInfo?.firstName || ''} ${l.lastName || l.userInfo?.lastName || ''}`.toLowerCase();
+        const email = String(l.email || l.userInfo?.email || '').toLowerCase();
+        const phone = String(l.phone || l.userInfo?.phoneNumber || l.userInfo?.phone || '').toLowerCase();
+        const bType = String(l.buildingType || '').toLowerCase();
+        const source = String(l.source || '').toLowerCase();
+        return name.includes(q) || email.includes(q) || phone.includes(q) || bType.includes(q) || source.includes(q);
+      });
+    }
+    setFiltered(result);
+  }, [statusFilter, search, leads]);
 
-  useEffect(() => { setPage(1); }, [filtered.length, statusFilter]);
+  useEffect(() => { setPage(1); }, [filtered.length, statusFilter, search]);
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const paginatedLeads = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -284,21 +318,26 @@ export default function LeadsPage() {
           <p>Manage your leads and track their progress</p>
         </div>
         <div className={styles.headerActions}>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={styles.filterSelect}>
-            <option value="">All Status</option>
-            {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <div style={{ minWidth: '150px' }}>
+            <SearchableSelect
+              value={statusFilter}
+              onChange={val => setStatusFilter(val)}
+              placeholder="All Status"
+              options={[
+                { value: '', label: 'All Status' },
+                ...statusOptions.map(s => ({ value: s, label: s.toUpperCase() }))
+              ]}
+            />
+          </div>
+          <button className={styles.btnSecondary} onClick={handleExportCsv} title="Export Leads to CSV">
+            <Download size={18} /> Export CSV
+          </button>
           {canCreateLeadOrUser && (
             <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
               <Plus size={18} /> New Lead
             </button>
           )}
-          {/* {user?.canCreateSubUsers && (
-            <button className={styles.btnPrimary} onClick={() => openAddUserModal()}>
-              <Plus size={18} /> Add User
-            </button>
-          )} */}
-           {user?.canCreateSubUsers && (
+          {user?.canCreateSubUsers && (
             <button className={styles.btnPrimary} onClick={() => setShowUserModal(true)}>
               <Plus size={18} /> Add User
             </button>
@@ -307,6 +346,19 @@ export default function LeadsPage() {
             <RefreshCw size={18} /> Refresh
           </button>
         </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', margin: '16px 0', padding: '10px 16px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>
+        <Search size={18} style={{ color: 'var(--text-muted)' }} />
+        <input
+          placeholder="Search leads by client name, email, phone, building type, or source..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: '0.88rem' }}
+        />
+        {search && (
+          <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}>Clear</button>
+        )}
       </div>
       
       {/* Lead Modal */}
@@ -458,18 +510,15 @@ export default function LeadsPage() {
                 No Data Viewer admins found. Create one from the Admins page first.
               </p>
             ) : (
-              <select
+              <SearchableSelect
                 value={selectedAdminId}
-                onChange={e => setSelectedAdminId(e.target.value)}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-primary)' }}
-                required
-              >
-                {dataViewers.map(dv => (
-                  <option key={dv._id} value={dv._id}>
-                    {dv.companyName ? `${dv.companyName} (${dv.email})` : `${dv.firstName} ${dv.lastName || ''} (${dv.email})`}
-                  </option>
-                ))}
-              </select>
+                onChange={val => setSelectedAdminId(val)}
+                placeholder="Search and select Data Viewer..."
+                options={dataViewers.map(dv => ({
+                  value: dv._id,
+                  label: dv.companyName ? `${dv.companyName} (${dv.email})` : `${dv.firstName} ${dv.lastName || ''} (${dv.email})`.trim()
+                }))}
+              />
             )}
           </div>
           <div className="form-group">

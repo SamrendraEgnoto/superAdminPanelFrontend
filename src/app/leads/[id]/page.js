@@ -11,6 +11,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import PhoneInput from '@/src/components/PhoneInput';
 import { validatePhone } from '@/src/lib/validation';
 import toast from 'react-hot-toast';
+import SearchableSelect from '@/src/components/SearchableSelect';
 
 export default function LeadDetailsPage({ params }) {
   const { id } = use(params);
@@ -143,20 +144,20 @@ export default function LeadDetailsPage({ params }) {
 
               <div className={styles.field}>
                 <label>Status</label>
-                <select
-                  name="status"
+                <SearchableSelect
                   value={lead.status || ''}
-                  onChange={handleChange}
+                  onChange={val => handleChange({ target: { name: 'status', value: val } })}
                   disabled={!permissions.includes('edit')}
-                >
-                  <option value="new">new</option>
-                  <option value="contacted">contacted</option>
-                  <option value="qualified">qualified</option>
-                  <option value="proposal">proposal</option>
-                  <option value="negotiation">negotiation</option>
-                  <option value="closed-won">closed-won</option>
-                  <option value="closed-lost">closed-lost</option>
-                </select>
+                  options={[
+                    { value: 'new', label: 'new' },
+                    { value: 'contacted', label: 'contacted' },
+                    { value: 'qualified', label: 'qualified' },
+                    { value: 'proposal', label: 'proposal' },
+                    { value: 'negotiation', label: 'negotiation' },
+                    { value: 'closed-won', label: 'closed-won' },
+                    { value: 'closed-lost', label: 'closed-lost' }
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -350,14 +351,28 @@ export default function LeadDetailsPage({ params }) {
               <h3>Assigned Users</h3>
 
               {lead.assignedUsers?.length > 0 ? (
-                lead.assignedUsers.map((u, i) => (
-                  <div key={i} className={styles.userRow}>
-                    <strong>{u.user?.firstName} {u.user?.lastName}</strong>
-                    <span className={styles.permission}>
-                      {u.permissions?.join(', ')}
-                    </span>
-                  </div>
-                ))
+                lead.assignedUsers.map((u, i) => {
+                  const rawFirst = u.user?.firstName || '';
+                  const rawLast = u.user?.lastName || '';
+                  const fullName = `${rawFirst} ${rawLast}`.trim();
+                  const isEncrypted = (str) => typeof str === 'string' && (str.startsWith('gcm:') || str.startsWith('{') || (str.length > 30 && /^[A-Za-z0-9+/=]+$/.test(str)));
+                  const displayName = (fullName && !isEncrypted(fullName)) 
+                    ? fullName 
+                    : (u.user?.email && !isEncrypted(u.user?.email) ? u.user.email : 'Team Member');
+                  return (
+                    <div key={i} className={styles.userRow}>
+                      <div>
+                        <strong>{displayName}</strong>
+                        {u.user?.email && !isEncrypted(u.user?.email) && displayName !== u.user.email && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.user.email}</div>
+                        )}
+                      </div>
+                      <span className={styles.permission}>
+                        {u.permissions?.join(', ')}
+                      </span>
+                    </div>
+                  );
+                })
               ) : (
                 <p className={styles.noUsers}>No users assigned</p>
               )}

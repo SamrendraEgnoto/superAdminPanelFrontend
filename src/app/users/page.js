@@ -6,7 +6,7 @@ import { queryKeys } from '@/src/lib/api';
 import api from '@/src/lib/api';
 import Modal from '@/src/components/Modal';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
-import { Plus, Search, RefreshCw, Edit2, Trash2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, RefreshCw, Edit2, Trash2, AlertCircle, Eye, EyeOff, Download } from 'lucide-react';
 import styles from './Users.module.scss';
 import AssignLeadsToUserModal from '@/src/components/Modals/AssignLeadsToUserModal';
 import { useAuth } from '@/src/context/AuthContext';
@@ -15,6 +15,7 @@ import { validatePhone, sanitizePhone } from '@/src/lib/validation';
 import toast from 'react-hot-toast';
 import Pagination from '@/src/components/Pagination';
 import PhoneInput from '@/src/components/PhoneInput';
+import { exportToCsv } from '@/src/lib/exportCsv';
 
 const initialForm = {
   firstName: '',
@@ -87,10 +88,23 @@ export default function UsersPage() {
     if (user) load();
   }, [user, router]);
 
+  const handleExportCsv = () => {
+    const headers = [
+      { label: 'Full Name', accessor: (u) => `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'User' },
+      { label: 'Email', key: 'email' },
+      { label: 'Phone', key: 'phone' },
+      { label: 'Role', key: 'role' },
+      { label: 'Department', key: 'department' },
+      { label: 'Status', accessor: (u) => u.isActive ? 'Active' : 'Inactive' },
+      { label: 'Created At', accessor: (u) => u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '' }
+    ];
+    exportToCsv('Users', headers, filtered);
+  };
+
   useEffect(() => {
     const q = search.toLowerCase();
     const data = list.filter(u =>
-      `${u.firstName || ''} ${u.lastName || ''} ${u.email || ''}`.toLowerCase().includes(q)
+      `${u.firstName || ''} ${u.lastName || ''} ${u.email || ''} ${u.phone || ''} ${u.department || ''} ${u.role || ''}`.toLowerCase().includes(q)
     );
     setFiltered(data);
   }, [search, list]);
@@ -196,7 +210,10 @@ export default function UsersPage() {
               <Plus size={18} /> Add User
             </button>
           )}
-          <button className={styles.btnSecondary} onClick={load}>
+          <button className={styles.btnSecondary} onClick={handleExportCsv} title="Export CSV">
+            <Download size={18} /> Export CSV
+          </button>
+          <button className={styles.btnSecondary} onClick={load} title="Refresh">
             <RefreshCw size={18} />
           </button>
         </div>

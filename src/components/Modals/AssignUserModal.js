@@ -6,13 +6,14 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import Modal from '@/src/components/Modal';
 import api from '@/src/lib/api';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import styles from './AssignUserModal.module.scss';
 
 const PERMISSION_OPTIONS = ['read', 'edit', 'delete'];
 
 export default function AssignUsersModal({ isOpen, onClose, leadId, onSuccess }) {
   const [localAssignedUsers, setLocalAssignedUsers] = useState([]);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
   const queryClient = useQueryClient();
 
   // Fetch all users with caching
@@ -161,8 +162,33 @@ export default function AssignUsersModal({ isOpen, onClose, leadId, onSuccess })
         </div>
       ) : (
         <>
+          <div style={{ position: 'relative', marginBottom: '12px' }}>
+            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              placeholder="Search users by name..."
+              value={userSearchTerm}
+              onChange={e => setUserSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px 8px 36px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                background: 'var(--input-bg)',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem'
+              }}
+            />
+          </div>
           <div className={styles.container}>
-            {[...assignedUsers, ...availableUsers].map(u => (
+            {[...assignedUsers, ...availableUsers]
+              .filter(u => {
+                if (!userSearchTerm.trim()) return true;
+                const q = userSearchTerm.toLowerCase();
+                const name = `${u.firstName || ''} ${u.lastName || ''}`.toLowerCase();
+                return name.includes(q);
+              })
+              .map(u => (
               <div key={u.userId} className={styles.userCard}>
                 <div className={styles.userHeader}>
                   <input

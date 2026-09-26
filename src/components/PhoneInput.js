@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styles from './PhoneInput.module.scss';
 import { sanitizePhone, COUNTRY_CODES, parsePhoneNumber } from '@/src/lib/validation';
+import SearchableSelect from './SearchableSelect';
 
 export { COUNTRY_CODES, parsePhoneNumber };
 
@@ -27,6 +28,16 @@ export default function PhoneInput({
     setDigits(parsed.number);
   }, [parsed.countryCode, parsed.number]);
 
+  const countryOptions = useMemo(() => {
+    return COUNTRY_CODES.map((c, idx) => ({
+      value: c.code,
+      label: `${c.code}`,
+      sublabel: c.country,
+      flag: c.flag,
+      key: `${c.country}-${c.code}-${idx}`
+    }));
+  }, []);
+
   const notifyChange = (code, num) => {
     const combinedValue = num ? `${code} ${num}` : '';
     if (typeof onChange === 'function') {
@@ -42,8 +53,7 @@ export default function PhoneInput({
     }
   };
 
-  const handleCountryChange = (e) => {
-    const newCode = e.target.value;
+  const handleCountryChange = (newCode) => {
     setSelectedCode(newCode);
     notifyChange(newCode, digits);
   };
@@ -62,19 +72,16 @@ export default function PhoneInput({
 
   return (
     <div className={`${styles.phoneInputGroup} ${disabled ? styles.disabled : ''} ${className}`}>
-      <select
-        className={styles.countrySelect}
-        value={selectedCode}
-        onChange={handleCountryChange}
-        disabled={disabled}
-        aria-label="Country Code"
-      >
-        {COUNTRY_CODES.map((c, idx) => (
-          <option key={`${c.country}-${c.code}-${idx}`} value={c.code}>
-            {c.flag} {c.code} ({c.country})
-          </option>
-        ))}
-      </select>
+      <div className={styles.countryPickerWrapper}>
+        <SearchableSelect
+          options={countryOptions}
+          value={selectedCode}
+          onChange={handleCountryChange}
+          disabled={disabled}
+          searchPlaceholder="Search country/code..."
+          placeholder="+1"
+        />
+      </div>
       <input
         type="tel"
         inputMode="numeric"

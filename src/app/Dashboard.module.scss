@@ -124,12 +124,51 @@
 .activityHeader {
   @include flex-between;
   margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
 
   h3 {
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+  }
+}
+
+.activityHeaderControls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.activityTabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-surface-hover);
+  padding: 3px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.activityTabBtn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &.activeTab {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.3);
   }
 }
 

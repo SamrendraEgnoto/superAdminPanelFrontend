@@ -7,7 +7,6 @@
   border: 1px solid var(--border, #334155);
   border-radius: var(--radius-md, 8px);
   transition: all var(--transition-fast, 0.15s ease);
-  overflow: hidden;
 
   &:focus-within {
     border-color: var(--primary, #2563eb);
@@ -19,6 +18,12 @@
     cursor: not-allowed;
     background: var(--bg-surface-hover, #1e293b);
   }
+}
+
+.countryPickerWrapper {
+  width: 135px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border, #334155);
 }
 
 .countrySelect {

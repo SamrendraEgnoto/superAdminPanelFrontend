@@ -5,12 +5,13 @@ import api, { superAdminApi } from '@/src/lib/api';
 import { useAuth } from '@/src/context/AuthContext';
 import Modal from '@/src/components/Modal';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
-import { Plus, Search, RefreshCw, Edit2, Trash2, UserCog, ShieldCheck, ShieldOff, Zap, ShieldAlert, Code, Copy, Check, AlertCircle, Eye, EyeOff, UserCheck, Share2 } from 'lucide-react';
+import { Plus, Search, RefreshCw, Edit2, Trash2, UserCog, ShieldCheck, ShieldOff, Zap, ShieldAlert, Code, Copy, Check, AlertCircle, Eye, EyeOff, UserCheck, Share2, Download } from 'lucide-react';
 import styles from './Admins.module.scss';
 import Pagination from '@/src/components/Pagination';
 import toast from 'react-hot-toast';
 import PhoneInput from '@/src/components/PhoneInput';
 import { validatePhone } from '@/src/lib/validation';
+import { exportToCsv } from '@/src/lib/exportCsv';
 
 export default function AdminsPage() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function AdminsPage() {
   const [adminAvailableLeads, setAdminAvailableLeads] = useState([]);
   const [selectedLeadIdsForAdmin, setSelectedLeadIdsForAdmin] = useState([]);
   const [assignAdminLoading, setAssignAdminLoading] = useState(false);
+  const [leadSearchTerm, setLeadSearchTerm] = useState('');
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -245,6 +247,7 @@ export default function AdminsPage() {
 
   const openAssignLeadsModal = async (admin) => {
     setSelectedAdminForAssign(admin);
+    setLeadSearchTerm('');
     setAssignAdminModal(true);
     setAssignAdminLoading(true);
     try {
@@ -280,6 +283,32 @@ export default function AdminsPage() {
       toast.error(err.response?.data?.message || 'Failed to assign leads');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleExportCsv = () => {
+    if (tab === 'admins') {
+      const headers = [
+        { label: 'Company / Name', accessor: (a) => a.companyName || `${a.firstName || ''} ${a.lastName || ''}`.trim() || 'Admin' },
+        { label: 'Email', key: 'email' },
+        { label: 'Phone', key: 'phone' },
+        { label: 'Role / Type', accessor: (a) => a.adminType || 'tenant' },
+        { label: 'Plan', key: 'plan' },
+        { label: 'Status', accessor: (a) => a.isActive ? 'Active' : 'Inactive' },
+        { label: 'Total Leads', key: 'totalLeads' },
+        { label: 'Created At', accessor: (a) => a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '' }
+      ];
+      exportToCsv('Admins', headers, filtered);
+    } else {
+      const headers = [
+        { label: 'Name', accessor: (s) => `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Super Admin' },
+        { label: 'Email', key: 'email' },
+        { label: 'Phone', key: 'phone' },
+        { label: 'Role', key: 'role' },
+        { label: 'Status', accessor: (s) => s.isActive ? 'Active' : 'Inactive' },
+        { label: 'Created At', accessor: (s) => s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '' }
+      ];
+      exportToCsv('DelegatedSuperAdmins', headers, filteredSAs);
     }
   };
 
@@ -371,7 +400,10 @@ export default function AdminsPage() {
               <Plus size={18} /> Create Super Admin
             </button>
           )}
-          <button className={styles.btnSecondary} onClick={tab === 'admins' ? load : loadSAs}>
+          <button className={styles.btnSecondary} onClick={handleExportCsv} title="Export CSV">
+            <Download size={18} /> Export CSV
+          </button>
+          <button className={styles.btnSecondary} onClick={tab === 'admins' ? load : loadSAs} title="Refresh">
             <RefreshCw size={18} />
           </button>
         </div>
@@ -587,24 +619,11 @@ export default function AdminsPage() {
 
                           {isDsa && (
                             <button
-                              className={styles.iconBtn}
+                              className={styles.assignBtn}
                               title="Assign Leads to Admin"
                               onClick={() => openAssignLeadsModal(a)}
-                              style={{
-                                padding: '4px 8px',
-                                background: 'rgba(56, 189, 248, 0.12)',
-                                color: '#38bdf8',
-                                border: '1px solid rgba(56, 189, 248, 0.3)',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                cursor: 'pointer'
-                              }}
                             >
-                              <UserCheck size={14} /> Assign Leads
+                              Assign
                             </button>
                           )}
 
@@ -758,46 +777,76 @@ export default function AdminsPage() {
               No leads available to assign.
             </div>
           ) : (
-            <div style={{ maxHeight: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {adminAvailableLeads.map(l => {
-                const isChecked = selectedLeadIdsForAdmin.includes(l._id);
-                return (
-                  <label
-                    key={l._id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      background: isChecked ? 'rgba(37,99,235,0.1)' : 'var(--input-bg)',
-                      border: isChecked ? '1px solid var(--primary)' : '1px solid var(--border)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedLeadIdsForAdmin([...selectedLeadIdsForAdmin, l._id]);
-                        } else {
-                          setSelectedLeadIdsForAdmin(selectedLeadIdsForAdmin.filter(id => id !== l._id));
-                        }
-                      }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                        {(l.firstName || l.userInfo?.firstName || 'Lead')} {(l.lastName || l.userInfo?.lastName || '')}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {l.email || l.userInfo?.email || '—'} · {l.buildingType || 'Standard'} · Status: {l.status || 'new'}
-                      </div>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
+            <>
+              <div style={{ position: 'relative' }}>
+                <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search available leads by name, email, type..."
+                  value={leadSearchTerm}
+                  onChange={e => setLeadSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px 8px 36px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    background: 'var(--input-bg)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem'
+                  }}
+                />
+              </div>
+
+              <div style={{ maxHeight: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {adminAvailableLeads
+                  .filter(l => {
+                    if (!leadSearchTerm.trim()) return true;
+                    const q = leadSearchTerm.toLowerCase();
+                    const name = `${l.firstName || l.userInfo?.firstName || ''} ${l.lastName || l.userInfo?.lastName || ''}`.toLowerCase();
+                    const email = (l.email || l.userInfo?.email || '').toLowerCase();
+                    const type = (l.buildingType || '').toLowerCase();
+                    return name.includes(q) || email.includes(q) || type.includes(q);
+                  })
+                  .map(l => {
+                    const isChecked = selectedLeadIdsForAdmin.includes(l._id);
+                    return (
+                      <label
+                        key={l._id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          background: isChecked ? 'rgba(37,99,235,0.1)' : 'var(--input-bg)',
+                          border: isChecked ? '1px solid var(--primary)' : '1px solid var(--border)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedLeadIdsForAdmin([...selectedLeadIdsForAdmin, l._id]);
+                            } else {
+                              setSelectedLeadIdsForAdmin(selectedLeadIdsForAdmin.filter(id => id !== l._id));
+                            }
+                          }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                            {(l.firstName || l.userInfo?.firstName || 'Lead')} {(l.lastName || l.userInfo?.lastName || '')}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {l.email || l.userInfo?.email || '—'} · {l.buildingType || 'Standard'} · Status: {l.status || 'new'}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+              </div>
+            </>
           )}
 
           <div className={styles.modalActions}>

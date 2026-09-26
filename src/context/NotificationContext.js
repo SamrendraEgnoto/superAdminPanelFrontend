@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import toast, { useToasterStore } from 'react-hot-toast';
 import api from '@/src/lib/api';
+import { useSettings } from './SettingsContext';
 
 const NotificationContext = createContext(null);
 
@@ -15,6 +16,7 @@ export function NotificationProvider({ children }) {
   const seenServerIds = useRef(new Set());
   const initialFetchDone = useRef(false);
   const isFetchingRef = useRef(false);
+  const { settings } = useSettings?.() || {};
 
   // Fetch persistent notifications from backend API
   const fetchNotifications = useCallback(async () => {
@@ -43,19 +45,45 @@ export function NotificationProvider({ children }) {
 
         // If this is a subsequent poll, detect any newly arrived unread notifications and pop a toast
         if (initialFetchDone.current) {
-          const newlyArrived = serverItems.filter(item => !seenServerIds.current.has(item.id) && !item.read);
-          newlyArrived.forEach(item => {
-            toast(item.message || item.title || 'New lead arrived', {
-              icon: '🔔',
-              duration: 6000,
-              style: {
-                borderRadius: '10px',
-                background: '#1e293b',
-                color: '#fff',
-                fontSize: '0.88rem'
-              }
+          const notifPrefs = settings?.notifications || {};
+          if (notifPrefs.inAppToasts !== false) {
+            const newlyArrived = serverItems.filter(item => !seenServerIds.current.has(item.id) && !item.read);
+            const filteredArrivals = newlyArrived.filter(item => {
+              const text = `${item.title || ''} ${item.message || ''}`.toLowerCase();
+              const isNewLead = text.includes('lead arrived') || text.includes('new lead') || text.includes('received:');
+              const isAssignment = text.includes('assign') || text.includes('shared');
+              if (isNewLead && notifPrefs.newLeadAlerts === false) return false;
+              if (isAssignment && notifPrefs.assignmentAlerts === false) return false;
+              return true;
             });
-          });
+
+            if (filteredArrivals.length > 2) {
+              toast(`🔔 ${filteredArrivals.length} new notifications received`, {
+                id: 'batch-notifications-toast',
+                duration: 5000,
+                style: {
+                  borderRadius: '10px',
+                  background: '#1e293b',
+                  color: '#fff',
+                  fontSize: '0.88rem'
+                }
+              });
+            } else if (filteredArrivals.length > 0) {
+              filteredArrivals.forEach(item => {
+                toast(item.message || item.title || 'New notification', {
+                  id: `toast-${item.id}`,
+                  icon: '🔔',
+                  duration: 5000,
+                  style: {
+                    borderRadius: '10px',
+                    background: '#1e293b',
+                    color: '#fff',
+                    fontSize: '0.88rem'
+                  }
+                });
+              });
+            }
+          }
         }
 
         // Track all seen server notification IDs

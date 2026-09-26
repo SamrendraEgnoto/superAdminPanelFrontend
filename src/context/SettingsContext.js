@@ -13,6 +13,8 @@ export const SettingsProvider = ({ children }) => {
       pushNotifications: false,
       weeklyReports: true,
       newLeadAlerts: true,
+      assignmentAlerts: true,
+      inAppToasts: true,
     },
     appearance: {
       theme: 'dark',

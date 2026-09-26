@@ -92,6 +92,7 @@ export default function SettingsPage() {
   const isRoot = user?.role === 'root' || user?.isRoot || user?.dbRole === 'root';
   const isDsa = !isRoot && (user?.role === 'superadmin' || user?.isDsa || user?.dbRole === 'delegated');
   const isTenantAdmin = user?.role === 'admin' && user?.adminType !== 'data-viewer';
+  const isParentOrRoot = isRoot || isDsa || isTenantAdmin;
   // Root Super Admin cannot see or generate embed keys. Only DSA or Tenant Admins (created by root) can.
   const canAccessEmbedKey = Boolean(!isRoot && (isDsa || isTenantAdmin));
 
@@ -130,8 +131,10 @@ export default function SettingsPage() {
       } else {
         fetchEmbedKeys();
       }
+    } else if (!isParentOrRoot && (activeTab === 'integrations' || activeTab === 'system')) {
+      setActiveTab('notifications');
     }
-  }, [activeTab, canAccessEmbedKey]);
+  }, [activeTab, canAccessEmbedKey, isParentOrRoot]);
 
   const handleGenerateKey = async () => {
     if (!canAccessEmbedKey) return;
@@ -174,9 +177,9 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette size={18} /> },
-    { id: 'integrations', label: 'Integrations', icon: <Mail size={18} /> },
+    ...(isParentOrRoot ? [{ id: 'integrations', label: 'Integrations', icon: <Mail size={18} /> }] : []),
     ...(canAccessEmbedKey ? [{ id: 'embedKey', label: '3D Embed Key', icon: <Code size={18} /> }] : []),
-    { id: 'system', label: 'System', icon: <Database size={18} /> },
+    ...(isParentOrRoot ? [{ id: 'system', label: 'System', icon: <Database size={18} /> }] : []),
   ];
 
   if (fetching) {
@@ -261,8 +264,10 @@ export default function SettingsPage() {
                 {[
                   { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive notifications via email' },
                   { key: 'pushNotifications', label: 'Push Notifications', desc: 'Browser push notifications' },
+                  { key: 'inAppToasts', label: 'In-App Popups & Toasts', desc: 'Display realtime popup banners on screen' },
                   { key: 'weeklyReports', label: 'Weekly Reports', desc: 'Get a weekly summary report' },
-                  { key: 'newLeadAlerts', label: 'New Lead Alerts', desc: 'Alert when new leads are assigned' },
+                  { key: 'newLeadAlerts', label: 'New Lead Alerts', desc: 'Alert when new leads arrive' },
+                  { key: 'assignmentAlerts', label: 'Assignment Alerts', desc: 'Alert when leads are assigned or shared' },
                 ].map((item) => (
                   <label key={item.key} className={styles.toggleGroup}>
                     <div className={styles.toggleInfo}>
