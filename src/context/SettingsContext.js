@@ -6,33 +6,46 @@ import toast from 'react-hot-toast';
 
 const SettingsContext = createContext();
 
+const DEFAULT_SETTINGS = {
+  notifications: {
+    emailNotifications: true,
+    pushNotifications: false,
+    weeklyReports: true,
+    newLeadAlerts: true,
+    assignmentAlerts: true,
+    inAppToasts: true,
+  },
+  appearance: {
+    theme: 'dark',
+    compactMode: false,
+    sidebarCollapsed: false,
+  },
+  system: {
+    autoBackup: true,
+    backupFrequency: 'daily',
+    retentionPeriod: '90',
+  },
+  integration: {
+    emailProvider: 'smtp',
+    smtpHost: '',
+    smtpPort: '587',
+    smtpUser: '',
+    smtpPassword: '',
+  },
+};
+
 export const SettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState({
-    notifications: {
-      emailNotifications: true,
-      pushNotifications: false,
-      weeklyReports: true,
-      newLeadAlerts: true,
-      assignmentAlerts: true,
-      inAppToasts: true,
-    },
-    appearance: {
-      theme: 'dark',
-      compactMode: false,
-      sidebarCollapsed: false,
-    },
-    system: {
-      autoBackup: true,
-      backupFrequency: 'daily',
-      retentionPeriod: '90',
-    },
-    integration: {
-      emailProvider: 'smtp',
-      smtpHost: '',
-      smtpPort: '587',
-      smtpUser: '',
-      smtpPassword: '',
-    },
+  const [settings, setSettings] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('appSettings');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return { ...DEFAULT_SETTINGS, ...parsed };
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_SETTINGS;
   });
 
   const [loading, setLoading] = useState(true);
@@ -46,7 +59,19 @@ export const SettingsProvider = ({ children }) => {
       }
       return 'dark';
     }
-    return preference;
+    return preference || 'dark';
+  };
+
+  const applyTheme = (themePref) => {
+    const resolved = resolveTheme(themePref);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', resolved);
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', resolved);
+      localStorage.setItem('themePreference', themePref);
+    }
+    return resolved;
   };
 
   const loadSettings = async () => {
@@ -55,30 +80,53 @@ export const SettingsProvider = ({ children }) => {
       
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (!token) {
+        // Apply whatever is stored locally
+        const localTheme = localStorage.getItem('theme') || localStorage.getItem('themePreference') || 'dark';
+        applyTheme(localTheme);
         setLoading(false);
         return;
       }
 
       const response = await settingsApi.getSettings();
-      if (response.data.success && response.data.data) {
-        setSettings(response.data.data);
+      if (response.data?.success && response.data.data) {
+        const serverData = response.data.data;
+        const merged = {
+          ...DEFAULT_SETTINGS,
+          ...serverData,
+          appearance: { ...DEFAULT_SETTINGS.appearance, ...(serverData.appearance || {}) },
+          notifications: { ...DEFAULT_SETTINGS.notifications, ...(serverData.notifications || {}) },
+          system: { ...DEFAULT_SETTINGS.system, ...(serverData.system || {}) },
+          integration: { ...DEFAULT_SETTINGS.integration, ...(serverData.integration || {}) },
+        };
+        setSettings(merged);
+        localStorage.setItem('appSettings', JSON.stringify(merged));
         
         // Apply theme immediately
-        const theme = resolveTheme(response.data.data.appearance.theme);
-        document.documentElement.setAttribute('data-theme', theme);
+        const theme = merged.appearance.theme || 'dark';
+        applyTheme(theme);
         
         // Apply compact mode class to body
-        if (response.data.data.appearance.compactMode) {
-          document.body.classList.add('compact-mode');
-        } else {
-          document.body.classList.remove('compact-mode');
+        if (typeof document !== 'undefined') {
+          if (merged.appearance.compactMode) {
+            document.body.classList.add('compact-mode');
+          } else {
+            document.body.classList.remove('compact-mode');
+          }
         }
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
       // Fallback to local storage if available
-      const saved = localStorage.getItem('appSettings');
-      if (saved) setSettings(JSON.parse(saved));
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('appSettings');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setSettings(parsed);
+            if (parsed.appearance?.theme) applyTheme(parsed.appearance.theme);
+          } catch (e) {}
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -89,7 +137,12 @@ export const SettingsProvider = ({ children }) => {
     try {
       setSaving(true);
       await settingsApi.updateSettings(newSettings);
-      localStorage.setItem('appSettings', JSON.stringify(newSettings));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('appSettings', JSON.stringify(newSettings));
+        if (newSettings.appearance?.theme) {
+          applyTheme(newSettings.appearance.theme);
+        }
+      }
       if (!silent) toast.success('Settings saved successfully');
       return true;
     } catch (error) {
@@ -101,32 +154,79 @@ export const SettingsProvider = ({ children }) => {
   };
 
   const updateSetting = (category, key, value) => {
-    const updated = {
-      ...settings,
-      [category]: {
-        ...settings[category],
-        [key]: value
-      }
-    };
-    setSettings(updated);
+    let latestSettings;
+    setSettings(prev => {
+      latestSettings = {
+        ...prev,
+        [category]: {
+          ...(prev[category] || {}),
+          [key]: value
+        }
+      };
+      return latestSettings;
+    });
 
     // Immediate UI side effects
     if (category === 'appearance') {
       if (key === 'theme') {
-        const resolved = resolveTheme(value);
-        document.documentElement.setAttribute('data-theme', resolved);
-        localStorage.setItem('themePreference', value);
+        applyTheme(value);
+        // Persist theme choice immediately to user account in the background
+        settingsApi.updateSettings({
+          appearance: {
+            ...settings.appearance,
+            theme: value
+          }
+        }).catch(e => console.debug('Auto-sync theme to account failed:', e.message));
       }
       if (key === 'compactMode') {
-        if (value) document.body.classList.add('compact-mode');
-        else document.body.classList.remove('compact-mode');
+        if (typeof document !== 'undefined') {
+          if (value) document.body.classList.add('compact-mode');
+          else document.body.classList.remove('compact-mode');
+        }
       }
     }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('appSettings');
+        const current = saved ? JSON.parse(saved) : { ...settings };
+        current[category] = { ...(current[category] || {}), [key]: value };
+        localStorage.setItem('appSettings', JSON.stringify(current));
+      } catch (e) {}
+    }
     
-    return updated; // Return latest state
+    return latestSettings;
+  };
+
+  const resetSettings = async () => {
+    try {
+      setSaving(true);
+      setSettings(DEFAULT_SETTINGS);
+      applyTheme('dark');
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('compact-mode');
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('appSettings', JSON.stringify(DEFAULT_SETTINGS));
+      }
+      await settingsApi.updateSettings(DEFAULT_SETTINGS);
+      toast.success('Settings reset to defaults');
+      return true;
+    } catch (error) {
+      console.error('Failed to reset settings on server:', error);
+      toast.error('Settings reset locally, failed to sync with server');
+      return false;
+    } finally {
+      setSaving(false);
+    }
   };
 
   useEffect(() => {
+    // Initial local theme application right on mount
+    if (typeof window !== 'undefined') {
+      const storedTheme = localStorage.getItem('theme') || localStorage.getItem('themePreference');
+      if (storedTheme) applyTheme(storedTheme);
+    }
     loadSettings();
   }, []);
 
@@ -137,6 +237,7 @@ export const SettingsProvider = ({ children }) => {
       saving, 
       updateSetting, 
       saveSettings, 
+      resetSettings,
       refreshSettings: loadSettings 
     }}>
       {children}

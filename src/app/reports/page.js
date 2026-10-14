@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { userApi, adminApi, superAdminApi, api } from '@/src/lib/api';
+import { userApi, adminApi, superAdminApi } from '@/src/lib/api';
 import Charts from '@/src/components/Charts';
 import { exportToCsv } from '@/src/lib/exportCsv';
 import jsPDF from 'jspdf';
@@ -12,7 +12,7 @@ import {
   TrendingUp, Users, Building2, DollarSign,
   Download, RefreshCw, ArrowUpRight, ArrowDownRight,
   Minus, UserCog, CheckCircle2, XCircle, Clock,
-  Search, FileSpreadsheet
+  FileSpreadsheet
 } from 'lucide-react';
 import styles from './Reports.module.scss';
 
@@ -23,8 +23,6 @@ export default function ReportsPage() {
   const [dateRange,  setDateRange]  = useState('last_30_days');
   const [reportType, setReportType] = useState('overview');
   const [refreshKey, setRefreshKey] = useState(0);
-  const [userSearch, setUserSearch] = useState('');
-  const [adminSearch, setAdminSearch] = useState('');
 
   /* ── Role-based stats query ─────────────────────────────────────────── */
   const { data: roleStats, isLoading: statsLoading } = useQuery({
@@ -32,14 +30,8 @@ export default function ReportsPage() {
     queryFn: async () => {
       /* SUPERADMIN & DELEGATED SUPER ADMIN (DSA) */
       if (role === 'superadmin') {
-        const [statsRes, adminsRes, usersRes] = await Promise.all([
-          superAdminApi.getDashboardStats(),
-          superAdminApi.getAdmins({ limit: 100, sort: '-createdAt' }).catch(() => ({ data: { data: [] } })),
-          superAdminApi.getUsers({ limit: 100 }).catch(() => ({ data: { data: [] } })),
-        ]);
+        const statsRes = await superAdminApi.getDashboardStats();
         const d = statsRes.data?.data || {};
-        const admins = adminsRes.data?.data || adminsRes.data || [];
-        const users = usersRes.data?.data || usersRes.data || [];
 
         const cards = [
           { label: 'Total Admins',    value: (d.totalAdmins ?? d.totalDataViewers) ?? 0,    icon: <UserCog    size={22}/>, variant: 'primary',  change: null },
@@ -52,8 +44,6 @@ export default function ReportsPage() {
 
         return {
           cards,
-          admins,
-          users,
           chartStats: {
             secondary: (d.activeAdmins ?? d.activeDataViewers)   || 0,
             tertiary:  (d.inactiveAdmins ?? d.inactiveDataViewers) || 0,
@@ -65,12 +55,8 @@ export default function ReportsPage() {
 
       /* ADMIN */
       if (role === 'admin') {
-        const [dashRes, usersRes] = await Promise.all([
-          adminApi.getDashboard(),
-          adminApi.getUsers().catch(() => ({ data: { data: [] } })),
-        ]);
+        const dashRes = await adminApi.getDashboard();
         const stats = dashRes.data?.data?.statistics || {};
-        const users = usersRes.data?.data || usersRes.data || [];
 
         return {
           cards: [
@@ -81,8 +67,6 @@ export default function ReportsPage() {
             { label: 'Converted Leads',  value: stats.convertedLeads || 0, icon: <TrendingUp   size={22}/>, variant: 'warning' },
             { label: 'Pending Leads',    value: stats.pendingLeads || 0,   icon: <Clock        size={22}/>, variant: 'neutral' },
           ],
-          users,
-          admins: [],
           chartStats: {
             secondary: stats.activeUsers || 0,
             tertiary:  stats.inactiveUsers || 0,
@@ -102,8 +86,6 @@ export default function ReportsPage() {
           { label: 'Revenue',         value: `$${(d.revenue || 0).toLocaleString()}`, icon: <DollarSign size={22}/>, variant: 'warning' },
           { label: 'Active Users',    value: d.activeUsers    || 0, icon: <Users       size={22}/>, variant: 'info'    },
         ],
-        users: [],
-        admins: [],
         chartStats: {
           secondary: d.convertedLeads || 0,
           tertiary:  0,
@@ -123,34 +105,6 @@ export default function ReportsPage() {
     { label: 'Response Time',       value: '2.4h',    change: '+0.3h', trend: 'negative' },
     { label: 'Client Satisfaction', value: '4.8/5', change: '+0.2',  trend: 'positive' },
   ];
-
-  /* ── Filtering for data lists ────────────────────────────────────────── */
-  const usersList  = roleStats?.users  || [];
-  const adminsList = roleStats?.admins || [];
-
-  const filteredUsers = React.useMemo(() => {
-    if (!userSearch.trim()) return usersList;
-    const q = userSearch.toLowerCase();
-    return usersList.filter(u =>
-      (u.firstName && u.firstName.toLowerCase().includes(q)) ||
-      (u.lastName  && u.lastName.toLowerCase().includes(q))  ||
-      (u.email     && u.email.toLowerCase().includes(q))     ||
-      (u.phone     && u.phone.toLowerCase().includes(q))     ||
-      (u.role      && u.role.toLowerCase().includes(q))
-    );
-  }, [usersList, userSearch]);
-
-  const filteredAdmins = React.useMemo(() => {
-    if (!adminSearch.trim()) return adminsList;
-    const q = adminSearch.toLowerCase();
-    return adminsList.filter(a =>
-      (a.companyName && a.companyName.toLowerCase().includes(q)) ||
-      (a.firstName   && a.firstName.toLowerCase().includes(q))   ||
-      (a.lastName    && a.lastName.toLowerCase().includes(q))    ||
-      (a.email       && a.email.toLowerCase().includes(q))       ||
-      (a.phone       && a.phone.toLowerCase().includes(q))
-    );
-  }, [adminsList, adminSearch]);
 
   /* ── Exports ─────────────────────────────────────────────────────────── */
   const exportPDF = () => {
@@ -187,28 +141,6 @@ export default function ReportsPage() {
       { label: 'Metric', key: 'metric' },
       { label: 'Value', key: 'value' }
     ], rows);
-  };
-
-  const exportUsersCsv = () => {
-    exportToCsv(`Report_Users_${role}`, [
-      { label: 'Name', accessor: u => [u.firstName, u.lastName].filter(Boolean).join(' ') || 'User' },
-      { label: 'Email', key: 'email' },
-      { label: 'Phone', key: 'phone' },
-      { label: 'Role', key: 'role' },
-      { label: 'Status', accessor: u => (u.isActive !== false ? 'Active' : 'Inactive') },
-      { label: 'Created At', accessor: u => (u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A') },
-    ], filteredUsers);
-  };
-
-  const exportAdminsCsv = () => {
-    exportToCsv(`Report_Admins_${role}`, [
-      { label: 'Company / Name', accessor: a => a.companyName || [a.firstName, a.lastName].filter(Boolean).join(' ') || 'Admin' },
-      { label: 'Email', key: 'email' },
-      { label: 'Phone', key: 'phone' },
-      { label: 'Type', accessor: a => a.adminType || 'Standard' },
-      { label: 'Status', accessor: a => (a.isActive ? 'Active' : 'Inactive') },
-      { label: 'Created At', accessor: a => (a.createdAt ? new Date(a.createdAt).toLocaleDateString() : 'N/A') },
-    ], filteredAdmins);
   };
 
   const getTrendIcon = (trend) => {
@@ -328,129 +260,6 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
-
-      {/* ── Team Users Breakdown (DSA & Admin) ────────────────────────── */}
-      {usersList.length > 0 && (
-        <div className={styles.breakdownSection}>
-          <div className={styles.breakdownHeader}>
-            <h3>Team Users Breakdown ({filteredUsers.length})</h3>
-            <div className={styles.breakdownControls}>
-              <div className={styles.searchBox}>
-                <Search size={16} />
-                <input
-                  type="text"
-                  placeholder="Search user by name, email, role..."
-                  value={userSearch}
-                  onChange={e => setUserSearch(e.target.value)}
-                />
-              </div>
-              <button className={styles.exportCsvBtn} onClick={exportUsersCsv}>
-                <FileSpreadsheet size={16} /> Export Users CSV
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map(u => {
-                  const fullName = [u.firstName, u.lastName].filter(Boolean).join(' ') || 'User';
-                  const isActive = u.isActive !== false;
-                  return (
-                    <tr key={u._id}>
-                      <td>
-                        <strong>{fullName}</strong>
-                      </td>
-                      <td>{u.email || '—'}</td>
-                      <td>{u.phone || '—'}</td>
-                      <td>
-                        <span className={styles.roleBadge}>{u.role || 'user'}</span>
-                      </td>
-                      <td>
-                        <span className={`${styles.statusBadge} ${isActive ? styles.active : styles.inactive}`}>
-                          {isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ── Admins Breakdown (SuperAdmin / DSA) ──────────────────────── */}
-      {adminsList.length > 0 && (
-        <div className={styles.breakdownSection}>
-          <div className={styles.breakdownHeader}>
-            <h3>Admins Breakdown ({filteredAdmins.length})</h3>
-            <div className={styles.breakdownControls}>
-              <div className={styles.searchBox}>
-                <Search size={16} />
-                <input
-                  type="text"
-                  placeholder="Search admin by name, company, email..."
-                  value={adminSearch}
-                  onChange={e => setAdminSearch(e.target.value)}
-                />
-              </div>
-              <button className={styles.exportCsvBtn} onClick={exportAdminsCsv}>
-                <FileSpreadsheet size={16} /> Export Admins CSV
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Company / Admin</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAdmins.map(a => {
-                  const title = a.companyName || [a.firstName, a.lastName].filter(Boolean).join(' ') || 'Admin';
-                  return (
-                    <tr key={a._id}>
-                      <td>
-                        <strong>{title}</strong>
-                      </td>
-                      <td>{a.email || '—'}</td>
-                      <td>{a.phone || '—'}</td>
-                      <td>
-                        <span className={styles.roleBadge}>{a.adminType || 'Standard'}</span>
-                      </td>
-                      <td>
-                        <span className={`${styles.statusBadge} ${a.isActive ? styles.active : styles.inactive}`}>
-                          {a.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td>{a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
     </div>
   );

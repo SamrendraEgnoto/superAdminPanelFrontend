@@ -11,7 +11,7 @@ export default function Modal({
   children,
   maxWidth = '500px',
   showCloseButton = true,
-  closeOnOverlayClick = true,
+  closeOnOverlayClick = false,
   className = ''
 }) {
   const modalRef = useRef(null);

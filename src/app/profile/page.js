@@ -117,6 +117,23 @@ export default function ProfilePage() {
     }
   }
 
+  const handleCancel = () => {
+    if (profile) {
+      setProfileForm({
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        department: profile.department || '',
+        avatar: profile.avatar || '',
+        bio: profile.bio || '',
+        location: normalizeLocation(profile.location),
+        website: profile.website || ''
+      });
+      toast.success('Changes reverted');
+    }
+  }
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault()
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -223,11 +240,32 @@ export default function ProfilePage() {
           {activeTab === 'profile' && (
             <div className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h2>Profile Information</h2>
-                <p>Update your personal information and preferences</p>
+                <div className={styles.headerText}>
+                  <h2>Profile Information</h2>
+                  <p>Update your personal information and preferences</p>
+                </div>
+                <div className={styles.headerActions}>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={handleCancel}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    form="profileForm"
+                    className={styles.btn}
+                    disabled={loading}
+                  >
+                    <Save size={18} />
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
               </div>
 
-              <form onSubmit={handleProfileSubmit} className={styles.profileForm}>
+              <form id="profileForm" onSubmit={handleProfileSubmit} className={styles.profileForm}>
                 <div className={styles.formGrid}>
                   <div className="form-group">
                     <label>First Name <span className="requiredStar">*</span></label>
@@ -279,11 +317,6 @@ export default function ProfilePage() {
                   <label>Bio</label>
                   <textarea rows="4" value={profileForm.bio} onChange={(e) => setProfileForm(prev => ({ ...prev, bio: e.target.value }))} placeholder="Tell us about yourself..." />
                 </div>
-
-                <button type="submit" className={styles.btn} disabled={loading}>
-                  <Save size={18} />
-                  {loading ? 'Saving...' : 'Save Changes'}
-                </button>
               </form>
             </div>
           )}
@@ -291,11 +324,32 @@ export default function ProfilePage() {
           {activeTab === 'security' && (
             <div className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h2>Security Settings</h2>
-                <p>Manage your password and security preferences</p>
+                <div className={styles.headerText}>
+                  <h2>Security Settings</h2>
+                  <p>Manage your password and security preferences</p>
+                </div>
+                <div className={styles.headerActions}>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={() => setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    form="securityForm"
+                    className={styles.btn}
+                    disabled={loading}
+                  >
+                    <Save size={18} />
+                    {loading ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
               </div>
 
-              <form onSubmit={handlePasswordSubmit} className={styles.securityForm}>
+              <form id="securityForm" onSubmit={handlePasswordSubmit} className={styles.securityForm}>
                 <div className="form-group">
                   <label>Current Password <span className="requiredStar">*</span></label>
                   <div className={styles.passwordWrapper}>
@@ -343,10 +397,6 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 </div>
-                <button type="submit" className={styles.btn} disabled={loading}>
-                  <Save size={18} />
-                  {loading ? 'Updating...' : 'Update Password'}
-                </button>
               </form>
             </div>
           )}

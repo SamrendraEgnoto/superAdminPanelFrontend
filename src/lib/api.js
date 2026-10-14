@@ -185,6 +185,7 @@ export const superAdminApi = {
   getSuperAdmins: () => api.get('/superadmin/superadmins'),
   createSuperAdmin: (data) => api.post('/superadmin/superadmins', data),
   updateSuperAdmin: (id, data) => api.put(`/superadmin/superadmins/${id}`, data),
+  toggleSuperAdminStatus: (id, isActive) => api.put(`/superadmin/superadmins/${id}/status`, { isActive }),
   deleteSuperAdmin: (id) => api.delete(`/superadmin/superadmins/${id}`),
 
   // DSA Personal Embed Keys (Delegated SA embeds 3D on their own website)

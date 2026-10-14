@@ -26,6 +26,12 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-2xl);
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
 }
 
 .statCard {
@@ -109,6 +115,11 @@
   @include glassmorphism;
   padding: var(--spacing-xl);
   border-radius: var(--radius-xl);
+
+  @media (max-width: 768px) {
+    min-width: 100%;
+    padding: var(--spacing-md);
+  }
 }
 
 .activitySection {
@@ -119,6 +130,11 @@
   border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 768px) {
+    min-width: 100%;
+    padding: var(--spacing-md);
+  }
 }
 
 .activityHeader {
@@ -210,11 +226,14 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  min-width: 0;
+  flex: 1;
 }
 
 .itemIcon {
   width: 40px;
   height: 40px;
+  min-width: 40px;
   border-radius: var(--radius);
   background: var(--primary-transparent);
   color: var(--primary);
@@ -224,20 +243,35 @@
 .itemDetails {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
 
   .itemTitle {
     font-weight: 600;
     color: var(--text-primary);
     font-size: 0.9rem;
+    white-space: nowrap;
   }
 
   .itemSub {
     font-size: 0.78rem;
     color: var(--text-muted);
+    white-space: nowrap;
   }
 }
 
 .statusBadge {
+  flex-shrink: 0;
   padding: 4px 10px;
   border-radius: var(--radius-full);
   font-size: 0.7rem;

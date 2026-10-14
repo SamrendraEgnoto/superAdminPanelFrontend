@@ -20,6 +20,10 @@ export default function MainLayout({ children }) {
 
   // Sync initial and persistent collapsed state
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      setCollapsed(true);
+      return;
+    }
     if (settings?.appearance?.sidebarCollapsed !== undefined) {
       setCollapsed(settings.appearance.sidebarCollapsed);
     }

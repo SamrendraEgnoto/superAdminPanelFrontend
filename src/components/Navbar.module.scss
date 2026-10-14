@@ -18,12 +18,22 @@
   &.collapsed {
     left: var(--sidebar-width-collapsed);
   }
+
+  @media (max-width: 768px) {
+    left: 0 !important;
+    padding: 0 var(--spacing-sm);
+  }
 }
 
 .left {
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    gap: var(--spacing-xs);
+  }
 }
 
 .burger {
@@ -38,6 +48,7 @@
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
+  flex-shrink: 0;
 
   &:hover {
     background: var(--bg-surface-hover);
@@ -50,12 +61,29 @@
   color: var(--text-primary);
   font-size: 1.1rem;
   letter-spacing: -0.01em;
+
+  @media (max-width: 768px) {
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+  }
+
+  @media (max-width: 400px) {
+    font-size: 0.82rem;
+    max-width: 105px;
+  }
 }
 
 .right {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+
+  @media (max-width: 768px) {
+    gap: 6px;
+  }
 }
 
 .iconBtn {

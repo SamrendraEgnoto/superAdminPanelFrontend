@@ -7,7 +7,19 @@
   h1 { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; }
   p { color: var(--text-muted); font-size: 1rem; margin: 0; }
 }
-.headerActions { display: flex; gap: var(--spacing-sm); align-items: center; }
+.headerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+
+  @media (max-width: 600px) {
+    width: 100%;
+    button, select {
+      flex: 1;
+    }
+  }
+}
 .filterSelect { padding: 8px 14px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.85rem; cursor: pointer; &:focus { outline: none; border-color: var(--primary); } }
 
 .tableWrapper {

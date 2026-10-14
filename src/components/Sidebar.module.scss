@@ -10,7 +10,7 @@
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  transition: width var(--transition-bounce);
+  transition: width var(--transition-bounce), transform 0.3s ease;
   z-index: 1000;
 
   &.collapsed {
@@ -30,6 +30,44 @@
     .logoutBtn span {
       display: none;
     }
+  }
+
+  @media (max-width: 768px) {
+    width: 270px !important;
+    z-index: 2000;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.4);
+    transform: translateX(0);
+
+    &.collapsed {
+      transform: translateX(-100%);
+      width: 270px !important;
+    }
+
+    .brandText,
+    .navText,
+    .navBadge,
+    .userDetails {
+      display: block !important;
+    }
+
+    .logoutBtn span {
+      display: inline !important;
+    }
+  }
+}
+
+.backdrop {
+  display: none;
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 1999;
   }
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import toast, { useToasterStore } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import api from '@/src/lib/api';
 import { useSettings } from './SettingsContext';
 
@@ -12,7 +12,6 @@ const STORAGE_KEY = 'lead_mgmt_notifications_v1';
 export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [isClient, setIsClient] = useState(false);
-  const seenToastIds = useRef(new Set());
   const seenServerIds = useRef(new Set());
   const initialFetchDone = useRef(false);
   const isFetchingRef = useRef(false);
@@ -92,12 +91,7 @@ export function NotificationProvider({ children }) {
         });
         initialFetchDone.current = true;
 
-        setNotifications((prev) => {
-          // Merge server items with any recent client-only toast notifications
-          const clientOnlyItems = prev.filter(p => p.id && String(p.id).startsWith('toast_'));
-          const merged = [...serverItems, ...clientOnlyItems].slice(0, 50);
-          return merged;
-        });
+        setNotifications(serverItems.slice(0, 50));
       }
     } catch (err) {
       if (err.response?.status !== 401) {
@@ -116,8 +110,9 @@ export function NotificationProvider({ children }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          setNotifications(parsed);
-          parsed.forEach(p => {
+          const cleaned = parsed.filter(p => !p.id || !String(p.id).startsWith('toast_'));
+          setNotifications(cleaned);
+          cleaned.forEach(p => {
             if (p.id) seenServerIds.current.add(p.id);
           });
         }
@@ -157,53 +152,6 @@ export function NotificationProvider({ children }) {
       console.error('Failed to save notifications', e);
     }
   }, [notifications, isClient]);
-
-  // Listen to all toasts emitted by react-hot-toast in real time
-  const { toasts } = useToasterStore();
-
-  useEffect(() => {
-    if (!toasts || !toasts.length) return;
-
-    toasts.forEach((t) => {
-      if (!t.id || seenToastIds.current.has(t.id)) return;
-      if (t.type === 'loading') return;
-
-      let msgText = '';
-      if (typeof t.message === 'string') {
-        msgText = t.message;
-      } else if (typeof t.message === 'function') {
-        try {
-          const res = t.message(t);
-          msgText = typeof res === 'string' ? res : String(res);
-        } catch {
-          msgText = 'Notification alert';
-        }
-      } else if (t.message && typeof t.message === 'object') {
-        msgText = t.message.props?.children || 'Notification alert';
-      }
-
-      if (!msgText || typeof msgText !== 'string' || !msgText.trim()) return;
-
-      seenToastIds.current.add(t.id);
-
-      const newItem = {
-        id: 'toast_' + (t.id || Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
-        title: t.type === 'error' ? 'Action Failed' : t.type === 'success' ? 'Success' : 'Notice',
-        message: msgText,
-        type: t.type === 'error' ? 'error' : t.type === 'success' ? 'success' : 'info',
-        createdAt: new Date().toISOString(),
-        read: false
-      };
-
-      setNotifications((prev) => {
-        // Prevent duplicate text within short interval
-        if (prev.some(p => p.message === msgText && Math.abs(new Date(p.createdAt) - new Date()) < 2500)) {
-          return prev;
-        }
-        return [newItem, ...prev].slice(0, 50);
-      });
-    });
-  }, [toasts]);
 
   const addNotification = (notif) => {
     const item = {

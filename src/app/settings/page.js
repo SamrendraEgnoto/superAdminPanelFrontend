@@ -13,7 +13,7 @@ import styles from './Settings.module.scss';
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { settings, loading: fetching, saving: loading, updateSetting, saveSettings } = useSettings();
+  const { settings, loading: fetching, saving: loading, updateSetting, saveSettings, resetSettings } = useSettings();
 
   const [activeTab, setActiveTab] = useState('notifications');
   const [saved, setSaved] = useState(false);
@@ -43,42 +43,9 @@ export default function SettingsPage() {
     }
   };
 
-  const resetToDefaults = () => {
-    const defaults = {
-      notifications: {
-        emailNotifications: true,
-        pushNotifications: false,
-        weeklyReports: true,
-        newLeadAlerts: true,
-      },
-      appearance: {
-        theme: 'dark',
-        compactMode: false,
-        sidebarCollapsed: false,
-      },
-      system: {
-        autoBackup: true,
-        backupFrequency: 'daily',
-        retentionPeriod: '90',
-      },
-      integration: {
-        emailProvider: 'smtp',
-        smtpHost: '',
-        smtpPort: '587',
-        smtpUser: '',
-        smtpPassword: '',
-      },
-    };
-
-    // Update each category
-    Object.keys(defaults).forEach(category => {
-      Object.keys(defaults[category]).forEach(key => {
-        updateSetting(category, key, defaults[category][key]);
-      });
-    });
-
-    setHasChanges(true);
-    toast.success('Settings reset to defaults (click save to persist)');
+  const resetToDefaults = async () => {
+    await resetSettings();
+    setHasChanges(false);
   };
 
   // Role & Permission checks for 3D Embed Key:

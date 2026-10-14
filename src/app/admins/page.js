@@ -54,8 +54,10 @@ export default function AdminsPage() {
 
   // ----- Super Admins (delegated) -----
   const [saList, setSaList] = useState([]);
+  const [filteredSaList, setFilteredSaList] = useState([]);
   const [saLoading, setSaLoading] = useState(false);
   const [showSaModal, setShowSaModal] = useState(false);
+  const [editingSa, setEditingSa] = useState(null);
   const [saForm, setSaForm] = useState({ firstName: '', lastName: '', email: '', password: '', department: '', phone: '' });
   const [saFormError, setSaFormError] = useState('');
 
@@ -73,6 +75,7 @@ export default function AdminsPage() {
   const resetSaForm = () => {
     setSaForm({ firstName: '', lastName: '', email: '', password: '', department: '', phone: '' });
     setSaFormError('');
+    setEditingSa(null);
   };
 
   const sortDesc = (arr) => [...arr].sort((a,b) => new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0));
@@ -96,7 +99,9 @@ export default function AdminsPage() {
     try {
       const r = await superAdminApi.getSuperAdmins();
       const data = r.data?.data || [];
-      setSaList(sortDesc(data));
+      const sorted = sortDesc(data);
+      setSaList(sorted);
+      setFilteredSaList(sorted);
     } catch (err) {
       console.error(err);
     } finally {
@@ -111,9 +116,10 @@ export default function AdminsPage() {
 
   useEffect(() => {
     if (!search) {
-      setFiltered(list)
+      setFiltered(list);
+      setFilteredSaList(saList);
     } else {
-      const s = search.toLowerCase()
+      const s = search.toLowerCase();
       setFiltered(
         list.filter(a =>
           a.email?.toLowerCase().includes(s) ||
@@ -121,19 +127,27 @@ export default function AdminsPage() {
           a.lastName?.toLowerCase().includes(s) ||
           a.companyName?.toLowerCase().includes(s)
         )
-      )
+      );
+      setFilteredSaList(
+        saList.filter(sa =>
+          sa.email?.toLowerCase().includes(s) ||
+          sa.firstName?.toLowerCase().includes(s) ||
+          sa.lastName?.toLowerCase().includes(s) ||
+          sa.department?.toLowerCase().includes(s)
+        )
+      );
     }
-  }, [search, list])
+  }, [search, list, saList]);
 
   // Reset to page 1 when filter or tab changes
   useEffect(() => { setPage(1); }, [filtered.length, search]);
-  useEffect(() => { setSaPage(1); }, [saList.length]);
+  useEffect(() => { setSaPage(1); }, [filteredSaList.length, search]);
   useEffect(() => { setPage(1); setSaPage(1); }, [tab]);
 
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const paginatedAdmins = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const totalSaPages = Math.ceil(saList.length / pageSize) || 1;
-  const paginatedSAs = saList.slice((saPage - 1) * pageSize, saPage * pageSize);
+  const totalSaPages = Math.ceil(filteredSaList.length / pageSize) || 1;
+  const paginatedSAs = filteredSaList.slice((saPage - 1) * pageSize, saPage * pageSize);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -192,6 +206,20 @@ export default function AdminsPage() {
     }
   };
 
+  const openEditSa = (sa) => {
+    setEditingSa(sa);
+    setSaForm({
+      firstName: sa.firstName || '',
+      lastName: sa.lastName || '',
+      email: sa.email || '',
+      password: '',
+      department: sa.department || '',
+      phone: sa.phone || ''
+    });
+    setSaFormError('');
+    setShowSaModal(true);
+  };
+
   const submitSa = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -206,17 +234,49 @@ export default function AdminsPage() {
       }
     }
     try {
-      const res = await superAdminApi.createSuperAdmin({ ...saForm });
-      setSaList(prev => [res.data.data, ...prev]);
+      if (editingSa) {
+        const payload = { ...saForm };
+        if (!payload.password) delete payload.password;
+        const res = await superAdminApi.updateSuperAdmin(editingSa._id, payload);
+        const updated = res.data?.data || res.data;
+        setSaList(prev => prev.map(s => s._id === editingSa._id ? { ...s, ...updated } : s));
+        setFilteredSaList(prev => prev.map(s => s._id === editingSa._id ? { ...s, ...updated } : s));
+        toast.success('Super Admin updated successfully');
+      } else {
+        const res = await superAdminApi.createSuperAdmin({ ...saForm });
+        const created = res.data?.data || res.data;
+        setSaList(prev => [created, ...prev]);
+        setFilteredSaList(prev => [created, ...prev]);
+        toast.success('Super Admin created successfully');
+      }
       resetSaForm();
       setShowSaModal(false);
-      toast.success('Delegated Super Admin created successfully');
     } catch (err) {
-      const errorMsg = err?.response?.data?.message || err?.message || 'Failed to create Super Admin';
+      const errorMsg = err?.response?.data?.message || err?.message || (editingSa ? 'Failed to update Super Admin' : 'Failed to create Super Admin');
       setSaFormError(errorMsg);
       toast.error(errorMsg);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const toggleSaStatus = async (id, current) => {
+    try {
+      await superAdminApi.toggleSuperAdminStatus(id, !current);
+      setSaList(prev =>
+        prev.map(s =>
+          s._id === id ? { ...s, isActive: !current } : s
+        )
+      );
+      setFilteredSaList(prev =>
+        prev.map(s =>
+          s._id === id ? { ...s, isActive: !current } : s
+        )
+      );
+      toast.success(`Super Admin status updated to ${!current ? 'Active' : 'Inactive'}`);
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || 'Failed to update status');
     }
   };
 
@@ -308,7 +368,7 @@ export default function AdminsPage() {
         { label: 'Status', accessor: (s) => s.isActive ? 'Active' : 'Inactive' },
         { label: 'Created At', accessor: (s) => s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '' }
       ];
-      exportToCsv('DelegatedSuperAdmins', headers, filteredSAs);
+      exportToCsv('SuperAdmins', headers, filteredSaList);
     }
   };
 
@@ -454,6 +514,7 @@ export default function AdminsPage() {
           <Modal
             isOpen={showModal}
             onClose={() => { setShowModal(false); setAdminFormError(''); }}
+            closeOnOverlayClick={false}
             title={editing ? 'Edit Admin Account' : 'New Admin Account'}
           >
             <form onSubmit={submit} className={styles.modalForm}>
@@ -653,15 +714,16 @@ export default function AdminsPage() {
                 <tr>
                   <th>Super Admin</th>
                   <th>Department</th>
+                  <th>Status</th>
                   <th>Created</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {saLoading ? (
-                  <tr><td colSpan="4" className={styles.emptyCell}>Loading super admins...</td></tr>
-                ) : saList.length === 0 ? (
-                  <tr><td colSpan="4" className={styles.emptyCell}>No delegated Super Admins yet. Create one to let a partner manage their own businesses.</td></tr>
+                  <tr><td colSpan="5" className={styles.emptyCell}>Loading super admins...</td></tr>
+                ) : filteredSaList.length === 0 ? (
+                  <tr><td colSpan="5" className={styles.emptyCell}>No Super Admins yet. Create one to let a partner manage their own businesses.</td></tr>
                 ) : (
                   paginatedSAs.map(sa => (
                     <tr key={sa._id}>
@@ -675,9 +737,20 @@ export default function AdminsPage() {
                         </div>
                       </td>
                       <td>{sa.department || '—'}</td>
+                      <td>
+                        <span className={sa.isActive !== false ? styles.statusActive : styles.statusInactive}>
+                          {sa.isActive !== false ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
                       <td>{sa.createdAt ? new Date(sa.createdAt).toLocaleDateString() : '—'}</td>
                       <td>
                         <div className={styles.actions}>
+                          <button className={styles.iconBtn} title="Toggle Status" onClick={() => toggleSaStatus(sa._id, sa.isActive !== false)}>
+                            {sa.isActive !== false ? <ShieldOff size={15} /> : <ShieldCheck size={15} />}
+                          </button>
+                          <button className={styles.iconBtn} title="Edit Super Admin" onClick={() => openEditSa(sa)}>
+                            <Edit2 size={15} />
+                          </button>
                           <button className={`${styles.iconBtn} ${styles.danger}`} title="Delete Super Admin" onClick={() => deleteSa(sa._id)}>
                             <Trash2 size={15} />
                           </button>
@@ -689,14 +762,15 @@ export default function AdminsPage() {
               </tbody>
             </table>
           </div>
-          <Pagination currentPage={saPage} totalPages={totalSaPages} onPageChange={setSaPage} totalItems={saList.length} pageSize={pageSize} />
+          <Pagination currentPage={saPage} totalPages={totalSaPages} onPageChange={setSaPage} totalItems={filteredSaList.length} pageSize={pageSize} />
         </>
       )}
 
       <Modal
         isOpen={showSaModal}
-        onClose={() => { setShowSaModal(false); setSaFormError(''); }}
-        title="New Delegated Super Admin"
+        onClose={() => { setShowSaModal(false); setSaFormError(''); setEditingSa(null); }}
+        closeOnOverlayClick={false}
+        title={editingSa ? 'Edit Super Admin' : 'New Super Admin'}
       >
         <form onSubmit={submitSa} className={styles.modalForm}>
           {saFormError && (
@@ -718,14 +792,14 @@ export default function AdminsPage() {
             <input type="email" value={saForm.email} onChange={(e) => { setSaFormError(''); setSaForm({ ...saForm, email: e.target.value }); }} required placeholder="partner@example.com" />
           </div>
           <div className="form-group">
-            <label>Password <span className="requiredStar">*</span></label>
+            <label>{editingSa ? 'New Password (Optional)' : 'Password'} {!editingSa && <span className="requiredStar">*</span>}</label>
             <div className="passwordInputWrapper">
               <input
                 type={showSaPassword ? 'text' : 'password'}
                 value={saForm.password}
                 onChange={(e) => { setSaFormError(''); setSaForm({ ...saForm, password: e.target.value }); }}
-                required
-                placeholder="••••••••"
+                required={!editingSa}
+                placeholder={editingSa ? 'Leave blank to keep current password' : '••••••••'}
               />
               <button
                 type="button"
@@ -752,9 +826,9 @@ export default function AdminsPage() {
           </div>
           <div className={styles.modalActions}>
             <button className={styles.btnPrimary} type="submit" disabled={busy} style={{ flex: 1 }}>
-              {busy ? 'Creating...' : 'Create Super Admin'}
+              {busy ? 'Saving...' : editingSa ? 'Save Changes' : 'Create Super Admin'}
             </button>
-            <button className={styles.btnSecondary} type="button" onClick={() => setShowSaModal(false)}>Cancel</button>
+            <button className={styles.btnSecondary} type="button" onClick={() => { setShowSaModal(false); setEditingSa(null); }}>Cancel</button>
           </div>
         </form>
       </Modal>

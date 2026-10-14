@@ -50,7 +50,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
           {user?.role === 'root'
             ? 'Root Super Admin Panel'
             : user?.role === 'superadmin'
-            ? 'Delegated Super Admin Panel'
+            ? 'Super Admin Panel'
             : user?.role === 'admin'
             ? 'Admin Panel'
             : 'Lead Management'}
@@ -73,7 +73,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
             </div>
             <div className={styles.userInfo}>
               <span className={styles.role}>
-                {user?.role === 'root' ? 'Root Super Admin' : user?.role === 'superadmin' ? 'Delegated SA' : user?.role}
+                {user?.role === 'root' ? 'Root Super Admin' : user?.role === 'superadmin' ? 'Super Admin' : user?.role}
               </span>
               <span className={styles.status}>Online</span>
             </div>

@@ -37,6 +37,15 @@
   display: flex;
   gap: var(--spacing-md);
   align-items: center;
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
 }
 
 .resetBtn {

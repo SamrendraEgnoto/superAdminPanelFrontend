@@ -20,6 +20,30 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+              try {
+                var theme = localStorage.getItem('theme') || localStorage.getItem('themePreference');
+                if (!theme) {
+                  var saved = localStorage.getItem('appSettings');
+                  if (saved) {
+                    var parsed = JSON.parse(saved);
+                    theme = parsed && parsed.appearance && parsed.appearance.theme;
+                  }
+                }
+                if (theme === 'system') {
+                  theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                if (theme) {
+                  document.documentElement.setAttribute('data-theme', theme);
+                } else {
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                }
+              } catch(e) {}
+            })();`
+          }}
+        />
       </head>
       <body suppressHydrationWarning>
         <QueryProvider>

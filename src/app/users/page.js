@@ -381,7 +381,9 @@ export default function UsersPage() {
                     <td className={styles.nameCell}>
                       {u.firstName} {u.lastName}
                     </td>
-                    <td>{u.email}</td>
+                    <td>
+                      <span className={styles.scrollableCell} title={u.email}>{u.email}</span>
+                    </td>
                     <td>{u.department || '—'}</td>
                     <td>{u.statistics?.leadCount || 0}</td>
                     <td>{u.statistics?.wonLeads || 0}</td>
